@@ -11,6 +11,7 @@
 #include <QWidget>
 #include <QMap>
 #include "goku.h"
+#include "nivel1.h"
 
 
 
@@ -51,6 +52,8 @@ private:
     Goku *goku;
     QTimer *timerControllers;
     QMap<char, bool> keyStates;
+
+    Nivel1 *nivel1;
 
 };
 

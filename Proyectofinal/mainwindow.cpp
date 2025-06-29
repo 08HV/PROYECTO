@@ -22,8 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
     , menu1(nullptr)
     , videoItem(nullptr)
     , audioOutput(nullptr)
+    , scene(nullptr)
     , goku(nullptr)
     , timerControllers(nullptr)
+    , nivel1(nullptr)
 {
     ui->setupUi(this);
 
@@ -33,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     videoItem = new QGraphicsVideoItem();
     videoItem->setSize(ui->GraphicsView->viewport()->size());
     scene->addItem(videoItem);
-    scene->setSceneRect(QRectF(QPointF(0, 0), ui->GraphicsView->viewport()->size()));
+    scene->setSceneRect(QRectF(0, 0, ui->GraphicsView->viewport()->width(), ui->GraphicsView->viewport()->height()));
 
     player = new QMediaPlayer(this);
     audioOutput = new QAudioOutput(this);
@@ -108,6 +110,15 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    if (timerControllers) {
+        timerControllers->stop();
+        delete timerControllers;
+        timerControllers = nullptr;
+    }
+    if (nivel1) {
+        delete nivel1;
+        nivel1 = nullptr;
+    }
     delete ui;
 }
 
@@ -115,15 +126,18 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
 
+    QSizeF size = ui->GraphicsView->viewport()->size();
 
     if (videoItem && ui->GraphicsView) {
-        QSizeF size = ui->GraphicsView->viewport()->size();
         videoItem->setSize(size);
         if (ui->GraphicsView->scene())
-            ui->GraphicsView->scene()->setSceneRect(QRectF(QPointF(0, 0), size));
+            ui->GraphicsView->scene()->setSceneRect(QRectF(0, 0, size.width(), size.height()));
     }
     if (menu1) {
-        menu1->resize(ui->GraphicsView->viewport()->size());
+        menu1->resize(size.toSize());
+    }
+    if (nivel1 && nivel1->getEscena()) {
+        nivel1->getEscena()->setSceneRect(QRectF(0, 0, size.width(), size.height()));
     }
 }
 
@@ -131,13 +145,26 @@ void MainWindow::startGame()
 {
     menu1->hide();
     player->stop();
-    ui->GraphicsView->scene()->clear();
 
+    if (nivel1) {
+        delete nivel1;
+        nivel1 = nullptr;
+    }  
     goku = new Goku;
-    scene->addItem(goku);
     goku->setPos(0, 410);
 
+    nivel1 = new Nivel1(goku, this);
+    nivel1->getEscena()->addItem(goku);
+    nivel1->iniciarNivel();
 
+    QSizeF size = ui->GraphicsView->viewport()->size();
+    ui->GraphicsView->setScene(nivel1->getEscena());
+    ui->GraphicsView->scene()->setSceneRect(QRectF(0, 0, size.width(), size.height()));
+
+    if (timerControllers) {
+        timerControllers->stop();
+        delete timerControllers;
+    }
     timerControllers = new QTimer(this);
     connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop);
     timerControllers->start(16);

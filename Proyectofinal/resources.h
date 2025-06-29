@@ -11,6 +11,7 @@ public:
     static const QString runGoku;
     static const QString jumpGoku;
     static const QString attack1;
+    static const QString obstacle1;
 };
 
 #endif // RESOURCES_H

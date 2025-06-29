@@ -14,17 +14,25 @@ SOURCES += \
     juego.cpp \
     main.cpp \
     mainwindow.cpp \
+    nivel.cpp \
+    nivel1.cpp \
     nivel2.cpp \
+    obstaculo.cpp \
     personaje.cpp \
-    resources.cpp
+    resources.cpp \
+    tortuga.cpp
 
 HEADERS += \
     goku.h \
     juego.h \
     mainwindow.h \
+    nivel.h \
+    nivel1.h \
     nivel2.h \
+    obstaculo.h \
     personaje.h \
-    resources.h
+    resources.h \
+    tortuga.h
 
 FORMS += \
     mainwindow.ui
