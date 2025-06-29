@@ -7,6 +7,12 @@
 #include <QGraphicsVideoItem>
 #include <QGraphicsScene>
 #include <QAudioOutput>
+#include <QTimer>
+#include <QWidget>
+#include <QMap>
+#include "goku.h"
+
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,6 +30,13 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+
+private slots:
+    void startGame();
+    void gameLoop();
 
 private:
     Ui::MainWindow *ui;
@@ -33,6 +46,12 @@ private:
     QWidget *menu1;
     QGraphicsVideoItem *videoItem;
     QAudioOutput *audioOutput;
+    QGraphicsScene *scene;
+
+    Goku *goku;
+    QTimer *timerControllers;
+    QMap<char, bool> keyStates;
+
 };
 
 #endif // MAINWINDOW_H

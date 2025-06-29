@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Recur/video.mp4</file>
+        <file>Recur/goku_camin.png</file>
+        <file>Recur/goku_quieto.png</file>
+        <file>Recur/jump_ofi.png</file>
+        <file>Recur/punchOF.png</file>
+    </qresource>
+</RCC>

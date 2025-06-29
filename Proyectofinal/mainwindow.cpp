@@ -10,6 +10,8 @@
 #include <QDebug>
 #include <QResizeEvent>
 #include <QAudioOutput>
+#include <QKeyEvent>
+#include <QMouseEvent>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,10 +22,12 @@ MainWindow::MainWindow(QWidget *parent)
     , menu1(nullptr)
     , videoItem(nullptr)
     , audioOutput(nullptr)
+    , goku(nullptr)
+    , timerControllers(nullptr)
 {
     ui->setupUi(this);
 
-    QGraphicsScene *scene = new QGraphicsScene(this);
+    scene = new QGraphicsScene(this);
     ui->GraphicsView->setScene(scene);
 
     videoItem = new QGraphicsVideoItem();
@@ -90,10 +94,16 @@ MainWindow::MainWindow(QWidget *parent)
     menu1->resize(ui->GraphicsView->viewport()->size());
     menu1->show();
 
-    connect(btnJugar, &QPushButton::clicked, this, [](){
-        // La idea es iniciar el Juego desde aqui
-    });
+    connect(btnJugar, &QPushButton::clicked, this, &MainWindow::startGame);
+
     connect(btnSalir, &QPushButton::clicked, this, &QMainWindow::close);
+
+    keyStates['W'] = false;
+    keyStates['A'] = false;
+    keyStates['S'] = false;
+    keyStates['D'] = false;
+
+    showMaximized();
 }
 
 MainWindow::~MainWindow()
@@ -116,3 +126,91 @@ void MainWindow::resizeEvent(QResizeEvent *event)
         menu1->resize(ui->GraphicsView->viewport()->size());
     }
 }
+
+void MainWindow::startGame()
+{
+    menu1->hide();
+    player->stop();
+    ui->GraphicsView->scene()->clear();
+
+    goku = new Goku;
+    scene->addItem(goku);
+    goku->setPos(0, 410);
+
+
+    timerControllers = new QTimer(this);
+    connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop);
+    timerControllers->start(16);
+
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (!goku) return;
+    int key = event->key();
+
+    if (key == Qt::Key_W) {
+        keyStates['W'] = true;
+    }
+    else if (key == Qt::Key_A) {
+        keyStates['A'] = true;
+        goku->setIzqui(true);
+        goku->setLast('A');
+    }
+    else if (key == Qt::Key_S) {
+        keyStates['S'] = true;
+    }
+    else if (key == Qt::Key_D) {
+        keyStates['D'] = true;
+        goku->setDer(true);
+        goku->setLast('D');
+    }
+    else if ((key == Qt::Key_Space) && !goku->timerState()) {
+        goku->jumpG();
+    }
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent* event)
+{
+    if (!goku) return;
+    int key = event->key();
+
+    if (key == Qt::Key_W) {
+        keyStates['W'] = false;
+    }
+    else if (key == Qt::Key_A) {
+        keyStates['A'] = false;
+        goku->setIzqui(false);
+    }
+    else if (key == Qt::Key_S) {
+        keyStates['S'] = false;
+    }
+    else if (key == Qt::Key_D) {
+        keyStates['D'] = false;
+        goku->setDer(false);
+    }
+}
+
+void MainWindow::gameLoop()
+{
+    if (!goku) return;
+    if (keyStates['D']) {
+        goku->moveBy(5, 0);
+    }
+    else if (keyStates['A']) {
+        goku->moveBy(-5, 0);
+    }
+}
+
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    if (!goku) return;
+    Qt::MouseButton button = event->button();
+    if (button == Qt::LeftButton) {
+        goku->leftAttack();
+    }
+    else if (button == Qt::RightButton) {
+        goku->rightAttack();
+    }
+}
+
