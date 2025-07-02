@@ -58,3 +58,34 @@ void Nivel::slotObstaculoEliminado(Obstaculo* obs)
 {
     eliminarObstaculo(obs);
 }
+
+void Nivel::iniciarTemporizadorNivel(int segundos)
+{
+    if (!timerNivel) {
+        timerNivel = new QTimer(this);
+        connect(timerNivel, &QTimer::timeout, this, &Nivel::slotActualizarTemporizadorNivel);
+    }
+    tiempoRestanteNivel = segundos;
+    emit tiempoActualizadoNivel(tiempoRestanteNivel);
+    timerNivel->start(1000); // cada segundo
+}
+
+void Nivel::detenerTemporizadorNivel()
+{
+    if (timerNivel) timerNivel->stop();
+}
+
+int Nivel::getTiempoRestanteNivel() const
+{
+    return tiempoRestanteNivel;
+}
+
+void Nivel::slotActualizarTemporizadorNivel()
+{
+    tiempoRestanteNivel--;
+    emit tiempoActualizadoNivel(tiempoRestanteNivel);
+    if (tiempoRestanteNivel <= 0) {
+        timerNivel->stop();
+        emit tiempoFinalizadoNivel();
+    }
+}

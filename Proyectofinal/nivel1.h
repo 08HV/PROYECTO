@@ -6,6 +6,7 @@
 #include "goku.h"
 #include <QGraphicsPixmapItem>
 #include <QTimer>
+#include <QSize>
 
 #include <QtCore/qglobal.h>
 
@@ -19,6 +20,19 @@ public:
 
     void iniciarNivel() override;
 
+    void iniciarColeccionables(int cantidad);
+    QGraphicsPixmapItem* getColeccionable() const { return coleccionable; }
+    int getObjetosRecogidos() const { return objetosRecogidos; }
+    int getCantidadObjetivo() const { return cantidadObjetivo; }
+    void recogerColeccionable();
+
+    void setCantidadObjetivo(int cantidad) { cantidadObjetivo = cantidad; }
+    void terminarNivel(bool exito);
+
+signals:
+    void nivelCompletado();
+    void nivelFallido();
+
 protected:
     QTimer* timerTortugas;
     int frecuenciaTortugasMs;
@@ -27,10 +41,24 @@ protected slots:
 
     void slotCrearTortuga();
 
+    void slotCrearColeccionable();
+    void slotTiempoColeccionable();
+    void slotTiempoNivelFinalizado();
+
+
 private:
     Goku* goku;
     QGraphicsPixmapItem* fondo;
     QSize viewSize;
+
+    QGraphicsPixmapItem* coleccionable = nullptr;
+    QTimer* timerColeccionable = nullptr;
+    int cantidadObjetivo = 12;
+    int objetosRecogidos = 0;
+    void colocarColeccionableAleatorio();
+    bool nivelTerminado = false;
+
+
 };
 
 #endif // NIVEL1_H

@@ -13,6 +13,7 @@ public:
     static const QString attack1;
     static const QString obstacle1;
     static const QString nivel1;
+    static const QString esfera;
 };
 
 #endif // RESOURCES_H

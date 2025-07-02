@@ -12,6 +12,7 @@
 #include <QMap>
 #include "goku.h"
 #include "nivel1.h"
+#include <QLabel>
 
 
 
@@ -56,6 +57,10 @@ private:
     Nivel1 *nivel1;
 
     void manejarAceleracion(int key, bool presionado);
+
+    QLabel *labelTiempo = nullptr;
+    QLabel *labelObjetos = nullptr;
+
 
 };
 

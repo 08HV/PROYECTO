@@ -12,6 +12,9 @@
 #include <QAudioOutput>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QDialog>
+#include <QLabel>
+#include <QHBoxLayout>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,6 +29,9 @@ MainWindow::MainWindow(QWidget *parent)
     , goku(nullptr)
     , timerControllers(nullptr)
     , nivel1(nullptr)
+    , labelTiempo(nullptr)
+    , labelObjetos(nullptr)
+
 {
     ui->setupUi(this);
 
@@ -68,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
-    menu1 = new QWidget(ui->GraphicsView->viewport()); // ¡Usa el miembro!
+    menu1 = new QWidget(ui->GraphicsView->viewport());
     menu1->setAttribute(Qt::WA_TransparentForMouseEvents, false);
     menu1->setAttribute(Qt::WA_TranslucentBackground, true);
     menu1->setStyleSheet(R"(
@@ -81,7 +87,7 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *vertlay = new QVBoxLayout(menu1);
     vertlay->setAlignment(Qt::AlignCenter);
     vertlay->setSpacing(35);
-    vertlay->setContentsMargins(30, 120, 30, 120);
+    vertlay->setContentsMargins(30, 120, 30, 120); 
 
     btnJugar = new QPushButton("JUGAR", menu1);
     btnSalir = new QPushButton("SALIR", menu1);
@@ -97,6 +103,17 @@ MainWindow::MainWindow(QWidget *parent)
 
     menu1->resize(ui->GraphicsView->viewport()->size());
     menu1->show();
+
+    labelTiempo = new QLabel("Tiempo: 0", this);
+    labelTiempo->setStyleSheet("font-size: 22px; color: white; background: rgba(0,0,0,120);");
+    labelTiempo->setGeometry(30, 10, 180, 40);
+    labelTiempo->hide();
+
+    labelObjetos = new QLabel("Objetos: 0/12", this);
+    labelObjetos->setStyleSheet("font-size: 22px; color: white; background: rgba(0,0,0,120);");
+    labelObjetos->setGeometry(width()-230, 10, 200, 40);
+    labelObjetos->setAlignment(Qt::AlignRight);
+    labelObjetos->hide();
 
     connect(btnJugar, &QPushButton::clicked, this, &MainWindow::startGame);
 
@@ -138,13 +155,25 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     if (menu1) {
         menu1->resize(size.toSize());
     }
+
+    if (labelObjetos)
+        labelObjetos->setGeometry(width()-230, 10, 200, 40);
 }
 
 
 void MainWindow::startGame()
 {
+
+    keyStates['W'] = false;
+    keyStates['A'] = false;
+    keyStates['S'] = false;
+    keyStates['D'] = false;
+
     menu1->hide();
     player->stop();
+
+    if (labelTiempo) labelTiempo->show();
+    if (labelObjetos) labelObjetos->show();
 
     if (nivel1) {
         delete nivel1;
@@ -155,8 +184,90 @@ void MainWindow::startGame()
 
     nivel1 = new Nivel1(goku,this);
     nivel1->getEscena()->addItem(goku);
+
+    int cantidad =  12;
+    if (nivel1) nivel1->setCantidadObjetivo(cantidad);
+    labelObjetos->setText(QString("Objetos: 0/%1").arg(cantidad));
+
     nivel1->iniciarNivel();
 
+    connect(nivel1, &Nivel1::nivelCompletado, this, [this]() {
+        labelTiempo->hide();
+        labelObjetos->hide();
+
+        QDialog dialog(this);
+        dialog.setWindowTitle("¡Felicidades!");
+        QVBoxLayout *layout = new QVBoxLayout(&dialog);
+        QLabel *label = new QLabel("¡Nivel completado!", &dialog);
+        layout->addWidget(label);
+
+        QHBoxLayout *buttonLayout = new QHBoxLayout;
+        QPushButton *btnSiguienteNivel = new QPushButton("Siguiente nivel", &dialog);
+        QPushButton *btnReiniciar = new QPushButton("Reiniciar", &dialog);
+        QPushButton *btnSalir = new QPushButton("Salir", &dialog);
+
+        buttonLayout->addWidget(btnSiguienteNivel);
+        buttonLayout->addWidget(btnReiniciar);
+        buttonLayout->addWidget(btnSalir);
+        layout->addLayout(buttonLayout);
+
+
+        connect(btnSiguienteNivel, &QPushButton::clicked, &dialog, &QDialog::accept);
+        connect(btnReiniciar, &QPushButton::clicked, &dialog, &QDialog::reject);
+        connect(btnSalir, &QPushButton::clicked, &dialog, [this, &dialog]() {
+            dialog.done(2);
+        });
+
+        int result = dialog.exec();
+
+        if (result == QDialog::Accepted) {
+            //siguiente nivel2
+            // por ahora solo muesro el manu1
+            menu1->show();
+        } else if (result == QDialog::Rejected) {
+
+            startGame();
+        } else if (result == 2) {
+
+            close();
+        }
+    });
+
+    connect(nivel1, &Nivel1::nivelFallido, this, [this]() {
+        labelTiempo->hide();
+        labelObjetos->hide();
+
+        QDialog dialog(this);
+        dialog.setWindowTitle("Tiempo agotado o muerto");
+        QVBoxLayout *layout = new QVBoxLayout(&dialog);
+        QLabel *label = new QLabel("No lograste recoger todos los objetos.", &dialog);
+        layout->addWidget(label);
+
+        QHBoxLayout *buttonLayout = new QHBoxLayout;
+        QPushButton *btnReiniciar = new QPushButton("Reiniciar", &dialog);
+        QPushButton *btnSalir = new QPushButton("Salir", &dialog);
+
+        buttonLayout->addWidget(btnReiniciar);
+        buttonLayout->addWidget(btnSalir);
+        layout->addLayout(buttonLayout);
+
+        connect(btnReiniciar, &QPushButton::clicked, &dialog, &QDialog::accept);
+        connect(btnSalir, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+        int result = dialog.exec();
+
+        if (result == QDialog::Accepted) {
+            startGame();
+        } else {
+            close();
+        }
+    });
+
+
+    connect(nivel1, &Nivel1::tiempoActualizadoNivel, this, [this](int segundos) {
+        if (labelTiempo)
+            labelTiempo->setText(QString("Tiempo: %1").arg(segundos));
+    });
 
     ui->GraphicsView->setScene(nivel1->getEscena());
 
@@ -282,11 +393,23 @@ void MainWindow::gameLoop()
         if (goku->collidesWithItem(tortuga)) {
             if (goku->isAttacking()) {
                 nivel1->eliminarObstaculo(tortuga);
+                break;
             } else {
                 goku->morir();
+                nivel1->terminarNivel(false);
                 return;
             }
         }
+    }
+
+    if (nivel1->getColeccionable() && goku->collidesWithItem(nivel1->getColeccionable())) {
+        nivel1->recogerColeccionable();
+        if (labelObjetos)
+            labelObjetos->setText(
+                QString("Objetos: %1/%2")
+                    .arg(nivel1->getObjetosRecogidos())
+                    .arg(nivel1->getCantidadObjetivo())
+            );
     }
 }
 

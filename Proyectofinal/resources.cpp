@@ -10,4 +10,5 @@ const QString resources::jumpGoku = ":/Recur/jump_ofi.png";
 const QString resources::attack1 = ":/Recur/punchOF.png";
 const QString resources::obstacle1 = ":/Recur/tortoise.png";
 const QString resources::nivel1 = ":/Recur/nivel1.png";
+const QString resources::esfera = ":/Recur/esfera.png";
 

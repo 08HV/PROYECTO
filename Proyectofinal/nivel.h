@@ -26,16 +26,28 @@ public:
     QGraphicsScene* getEscena() const;
     QList<Obstaculo*> getObstaculos() const;
 
+    void iniciarTemporizadorNivel(int segundos);
+    void detenerTemporizadorNivel();
+    int getTiempoRestanteNivel() const;
+
+signals:
+    void tiempoActualizadoNivel(int segundosRestantes);
+    void tiempoFinalizadoNivel();
+
 
 protected:
     QGraphicsScene* escena;
     QList<Obstaculo*> obstaculos;
     QTimer* timerAceleracion;
 
+    QTimer* timerNivel = nullptr;
+    int tiempoRestanteNivel = 0;
+
 protected slots:
 
     virtual void slotAcelerarObstaculos();
     virtual void slotObstaculoEliminado(Obstaculo* obs);
+    virtual void slotActualizarTemporizadorNivel();
 };
 
 #endif // NIVEL_H
