@@ -9,6 +9,13 @@ Goku::Goku()
     jumpSprite = new QPixmap(resources::jumpGoku);
     attack1Sprite = new QPixmap(resources::attack1);
     // attack2Sprite = new QPixmap(resources::attack2);
+
+    comboTimer = new QTimer(this);
+    comboTimer->setSingleShot(true);
+    connect(comboTimer, &QTimer::timeout, [this](){
+        comboCounter = 0;
+        acelerando = false;
+    });
 }
 
 Goku::~Goku()
@@ -75,3 +82,7 @@ void Goku::animation()
     }
 
 }
+
+void Goku::activarAceleracion() { acelerando = true; }
+
+void Goku::desactivarAceleracion() { acelerando = false; }

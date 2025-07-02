@@ -55,6 +55,8 @@ private:
 
     Nivel1 *nivel1;
 
+    void manejarAceleracion(int key, bool presionado);
+
 };
 
 #endif // MAINWINDOW_H

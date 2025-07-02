@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    //ui->GraphicsView->setFixedSize(3400, 850);
+
     scene = new QGraphicsScene(this);
     ui->GraphicsView->setScene(scene);
 
@@ -106,6 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
     keyStates['D'] = false;
 
     showMaximized();
+
 }
 
 MainWindow::~MainWindow()
@@ -128,18 +131,15 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
     QSizeF size = ui->GraphicsView->viewport()->size();
 
-    if (videoItem && ui->GraphicsView) {
+    if (videoItem && ui->GraphicsView->scene() == scene) {
         videoItem->setSize(size);
-        if (ui->GraphicsView->scene())
-            ui->GraphicsView->scene()->setSceneRect(QRectF(0, 0, size.width(), size.height()));
+        scene->setSceneRect(QRectF(0, 0, size.width(), size.height()));
     }
     if (menu1) {
         menu1->resize(size.toSize());
     }
-    if (nivel1 && nivel1->getEscena()) {
-        nivel1->getEscena()->setSceneRect(QRectF(0, 0, size.width(), size.height()));
-    }
 }
+
 
 void MainWindow::startGame()
 {
@@ -149,17 +149,16 @@ void MainWindow::startGame()
     if (nivel1) {
         delete nivel1;
         nivel1 = nullptr;
-    }  
+    }
     goku = new Goku;
-    goku->setPos(0, 410);
+    goku->setPos(0, 540);
 
-    nivel1 = new Nivel1(goku, this);
+    nivel1 = new Nivel1(goku,this);
     nivel1->getEscena()->addItem(goku);
     nivel1->iniciarNivel();
 
-    QSizeF size = ui->GraphicsView->viewport()->size();
+
     ui->GraphicsView->setScene(nivel1->getEscena());
-    ui->GraphicsView->scene()->setSceneRect(QRectF(0, 0, size.width(), size.height()));
 
     if (timerControllers) {
         timerControllers->stop();
@@ -169,6 +168,31 @@ void MainWindow::startGame()
     connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop);
     timerControllers->start(16);
 
+}
+
+void MainWindow::manejarAceleracion(int key, bool presionado)
+{
+    if (!goku) return;
+    Goku* gokuReal = dynamic_cast<Goku*>(goku);
+    if (!gokuReal) return;
+
+    if (key == Qt::Key_Shift) {
+        gokuReal->shiftPressed = presionado;
+        if (!presionado) {
+            gokuReal->desactivarAceleracion();
+        }
+    }
+
+    if ((key == Qt::Key_A || key == Qt::Key_D) && presionado) {
+        gokuReal->comboCounter++;
+        if (gokuReal->comboTimer->isActive())
+            gokuReal->comboTimer->stop();
+        gokuReal->comboTimer->start(1000);
+
+        if (gokuReal->comboCounter >= 3 || gokuReal->shiftPressed) {
+            gokuReal->activarAceleracion();
+        }
+    }
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -195,6 +219,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     else if ((key == Qt::Key_Space) && !goku->timerState()) {
         goku->jumpG();
     }
+     manejarAceleracion(key, true);
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event)
@@ -216,18 +241,55 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
         keyStates['D'] = false;
         goku->setDer(false);
     }
+
+     manejarAceleracion(key, true);
 }
 
 void MainWindow::gameLoop()
 {
-    if (!goku) return;
+    if (!goku || !nivel1 ) return;
+    float v = 5.0f;
+    Goku* gokuReal = dynamic_cast<Goku*>(goku);
+    if (gokuReal) {
+        v = gokuReal->acelerando ? gokuReal->velocidadAcelerada : gokuReal->velocidadNormal;
+    }
+
+    QRectF sceneRect = nivel1->getEscena()->sceneRect();
+    QRectF gokuRect = goku->boundingRect().translated(goku->pos());
+
     if (keyStates['D']) {
-        goku->moveBy(5, 0);
+        if (gokuRect.right() + v <= sceneRect.right())
+        goku->moveBy(v, 0);
     }
     else if (keyStates['A']) {
-        goku->moveBy(-5, 0);
+        if (gokuRect.left() - v >= sceneRect.left())
+        goku->moveBy(-v, 0);
+    }
+
+    goku->updateFisica();
+    ui->GraphicsView->centerOn(goku);
+
+
+    for (Obstaculo* obs : nivel1->getObstaculos()) {
+        Tortuga* tortuga = dynamic_cast<Tortuga*>(obs);
+        if (!tortuga) continue;
+
+        if (tortuga->x() < 0) {
+            nivel1->eliminarObstaculo(tortuga);
+            continue;
+        }
+
+        if (goku->collidesWithItem(tortuga)) {
+            if (goku->isAttacking()) {
+                nivel1->eliminarObstaculo(tortuga);
+            } else {
+                goku->morir();
+                return;
+            }
+        }
     }
 }
+
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
@@ -238,6 +300,8 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
     else if (button == Qt::RightButton) {
         goku->rightAttack();
+
     }
 }
+
 

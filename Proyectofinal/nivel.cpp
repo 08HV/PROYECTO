@@ -43,6 +43,12 @@ QGraphicsScene* Nivel::getEscena() const
     return escena;
 }
 
+QList<Obstaculo*> Nivel::getObstaculos() const
+{
+    return obstaculos;
+}
+
+
 void Nivel::slotAcelerarObstaculos()
 {
     acelerarObstaculos(0.05f);

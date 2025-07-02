@@ -4,6 +4,8 @@
 #include "nivel.h"
 #include "tortuga.h"
 #include "goku.h"
+#include <QGraphicsPixmapItem>
+#include <QTimer>
 
 #include <QtCore/qglobal.h>
 
@@ -27,6 +29,8 @@ protected slots:
 
 private:
     Goku* goku;
+    QGraphicsPixmapItem* fondo;
+    QSize viewSize;
 };
 
 #endif // NIVEL1_H

@@ -13,18 +13,22 @@ protected:
     int row, column;
     float scale;
     QTimer* timer;
-    QTimer* jumptimer;
     QTimer* attackTimer;
     bool izqui, der, jump, attack1, attack2;
     char last;
     int maxCont;
     QPixmap* body;
+    bool attacking;
+    float velocidadY = 0.0f;
+    float gravedad = 1.2f;
+    bool enElAire = false;
+    float pisoY = 540;
 
 public:
     Personaje();
     virtual ~Personaje();
 
-    // Estado y control
+    // control
     void setIzqui(bool newIzqui);
     void setDer(bool newDer);
     char getLast() const;
@@ -33,18 +37,25 @@ public:
     void setJump(bool newJump);
     bool timerState();
 
-    // Métodos virtuales para animación que pueden ser sobreescritos
+
     virtual void updateSprite();
     virtual void splitSprite();
     virtual void jumpG();
     virtual void leftAttack();
     virtual void rightAttack();
 
+    bool isAttacking() const;
+    virtual void startAttack();
+    virtual void endAttack();
+    virtual void morir();
+
+    virtual void updateFisica();
+
 protected slots:
     virtual void animation();
-    virtual void stopJump();
     virtual void stopRattack();
     virtual void stopLattack();
+
 };
 
 #endif // PERSONAJE_H

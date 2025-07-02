@@ -9,6 +9,7 @@
 #include <QList>
 #include "obstaculo.h"
 
+
 class Nivel : public QObject
 {
     Q_OBJECT
@@ -23,6 +24,8 @@ public:
     virtual void acelerarObstaculos(float incremento);
 
     QGraphicsScene* getEscena() const;
+    QList<Obstaculo*> getObstaculos() const;
+
 
 protected:
     QGraphicsScene* escena;

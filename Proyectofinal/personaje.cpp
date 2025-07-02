@@ -4,12 +4,10 @@
 Personaje::Personaje() {
     body = new QPixmap();
     timer = new QTimer(this);
-    jumptimer = new QTimer(this);
     attackTimer = new QTimer(this);
     scale = 5;
     timer->start(120);
     connect(timer, SIGNAL(timeout()), this, SLOT(animation()));
-    connect(jumptimer, SIGNAL(timeout()), this, SLOT(stopJump()));
     connect(attackTimer, SIGNAL(timeout()), this, SLOT(stopLattack()));
     connect(attackTimer, SIGNAL(timeout()), this, SLOT(stopRattack()));
 
@@ -22,13 +20,13 @@ Personaje::Personaje() {
     attack1 = false;
     attack2 = false;
     maxCont = 0;
+    attacking = false;
 }
 
 Personaje::~Personaje()
 {
     delete timer;
     delete body;
-    delete jumptimer;
     delete attackTimer;
 }
 
@@ -38,7 +36,6 @@ char Personaje::getLast() const { return last; }
 void Personaje::setLast(char newLast) { last = newLast; }
 bool Personaje::getJump() const { return jump; }
 void Personaje::setJump(bool newJump) { jump = newJump; }
-bool Personaje::timerState() { return jumptimer->isActive(); }
 
 void Personaje::updateSprite() {
     if (column + 35 >= 209) {
@@ -96,20 +93,14 @@ void Personaje::animation() {
 }
 
 void Personaje::jumpG() {
-    if (!jumptimer->isActive()) {
+    if (!enElAire) {
         qDebug() << "Inicia Salto";
         jump = true;
-        moveBy(0, -120);
-        jumptimer->start(500);
+        enElAire=true;
+        velocidadY = -30;
     }
 }
 
-void Personaje::stopJump() {
-    qDebug() << "Finaliza Salto";
-    jump = false;
-    jumptimer->stop();
-    moveBy(0, 120);
-}
 
 void Personaje::leftAttack() {
     if (!attackTimer->isActive()) {
@@ -117,6 +108,7 @@ void Personaje::leftAttack() {
         column = 0;
         attackTimer->start(200);
         attack1 = true;
+        startAttack();
     }
 }
 
@@ -126,6 +118,7 @@ void Personaje::rightAttack() {
         column = 0;
         attackTimer->start(200);
         attack2 = true;
+        startAttack();
     }
 }
 
@@ -133,10 +126,45 @@ void Personaje::stopRattack() {
     qDebug() << "Finaliza izquierdo";
     attackTimer->stop();
     attack1 = false;
+    endAttack();
 }
 
 void Personaje::stopLattack() {
     qDebug() << "Finaliza derecho";
     attackTimer->stop();
     attack2 = false;
+    endAttack();
 }
+
+bool Personaje::isAttacking() const {
+    return attacking;
+}
+
+void Personaje::startAttack() {
+    attacking = true;
+}
+
+void Personaje::endAttack() {
+    attacking = false;
+}
+
+void Personaje::morir() {
+    this->setVisible(false);
+}
+
+void Personaje::updateFisica() {
+    if (enElAire) {
+        velocidadY += gravedad;
+        moveBy(0, velocidadY);
+
+        if (pos().y() >= pisoY) {
+            setPos(pos().x(), pisoY);
+            velocidadY = 0;
+            enElAire = false;
+            jump = false;
+        }
+    }
+}
+
+bool Personaje::timerState() {return false;}
+
