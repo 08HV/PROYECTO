@@ -33,11 +33,13 @@ Nivel1::~Nivel1()
 {
     timerTortugas->stop();
     timerColeccionable->stop();
+    qDebug() << "Destructor Nivel1";
     if (coleccionable) {
         escena->removeItem(coleccionable);
         delete coleccionable;
         coleccionable = nullptr;
     }
+
 }
 
 void Nivel1::iniciarNivel()

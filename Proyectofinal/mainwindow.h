@@ -13,6 +13,7 @@
 #include "goku.h"
 #include "nivel1.h"
 #include <QLabel>
+#include "nivel2.h"
 
 
 
@@ -38,7 +39,9 @@ protected:
 
 private slots:
     void startGame();
+    void startGame2();
     void gameLoop();
+    void gameLoop2();
 
 private:
     Ui::MainWindow *ui;
@@ -55,6 +58,7 @@ private:
     QMap<char, bool> keyStates;
 
     Nivel1 *nivel1;
+    Nivel2 *nivel2;
 
     void manejarAceleracion(int key, bool presionado);
 

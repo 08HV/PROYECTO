@@ -1,12 +1,22 @@
 #ifndef NIVEL2_H
 #define NIVEL2_H
 
+#include "nivel.h"
+#include <QGraphicsPixmapItem>
+
 #include <QtCore/qglobal.h>
 
-class Nivel2
+class Nivel2 : public Nivel
 {
+    Q_OBJECT
 public:
-    Nivel2();
+    explicit Nivel2(QObject *parent = nullptr);
+    ~Nivel2() override;
+
+    void iniciarNivel() override;
+
+private:
+    QGraphicsPixmapItem* fondo = nullptr;
 };
 
 #endif // NIVEL2_H

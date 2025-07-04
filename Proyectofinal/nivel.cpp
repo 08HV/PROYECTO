@@ -12,6 +12,7 @@ Nivel::Nivel(QObject *parent)
 Nivel::~Nivel()
 {
     obstaculos.clear();
+    qDebug() << "Destructor Nivel";
 }
 
 void Nivel::agregarObstaculo(Obstaculo* obs)

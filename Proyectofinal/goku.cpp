@@ -25,6 +25,7 @@ Goku::~Goku()
     delete jumpSprite;
     delete attack1Sprite;
     // delete attack2Sprite;
+    qDebug() << "Destructor Goku";
 }
 
 void Goku::updateSprite()

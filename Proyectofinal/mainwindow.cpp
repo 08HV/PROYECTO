@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     , nivel1(nullptr)
     , labelTiempo(nullptr)
     , labelObjetos(nullptr)
+    , nivel2(nullptr)
 
 {
     ui->setupUi(this);
@@ -130,6 +131,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    qDebug() << "Destructor MainWindow llamado";
     if (timerControllers) {
         timerControllers->stop();
         delete timerControllers;
@@ -139,6 +141,11 @@ MainWindow::~MainWindow()
         delete nivel1;
         nivel1 = nullptr;
     }
+    if (nivel2) {
+        delete nivel2;
+        nivel2 = nullptr;
+    }
+    goku = nullptr;
     delete ui;
 }
 
@@ -175,9 +182,17 @@ void MainWindow::startGame()
     if (labelTiempo) labelTiempo->show();
     if (labelObjetos) labelObjetos->show();
 
+    if (timerControllers) {
+        timerControllers->stop();
+        delete timerControllers;
+        timerControllers = nullptr;
+    }
+
     if (nivel1) {
+        qDebug() << "Eliminando nivel1 en starGame";
         delete nivel1;
         nivel1 = nullptr;
+        goku = nullptr;
     }
     goku = new Goku;
     goku->setPos(0, 540);
@@ -192,45 +207,42 @@ void MainWindow::startGame()
     nivel1->iniciarNivel();
 
     connect(nivel1, &Nivel1::nivelCompletado, this, [this]() {
+
         labelTiempo->hide();
         labelObjetos->hide();
 
-        QDialog dialog(this);
-        dialog.setWindowTitle("¡Felicidades!");
-        QVBoxLayout *layout = new QVBoxLayout(&dialog);
-        QLabel *label = new QLabel("¡Nivel completado!", &dialog);
-        layout->addWidget(label);
-
-        QHBoxLayout *buttonLayout = new QHBoxLayout;
-        QPushButton *btnSiguienteNivel = new QPushButton("Siguiente nivel", &dialog);
-        QPushButton *btnReiniciar = new QPushButton("Reiniciar", &dialog);
-        QPushButton *btnSalir = new QPushButton("Salir", &dialog);
-
-        buttonLayout->addWidget(btnSiguienteNivel);
-        buttonLayout->addWidget(btnReiniciar);
-        buttonLayout->addWidget(btnSalir);
-        layout->addLayout(buttonLayout);
-
-
-        connect(btnSiguienteNivel, &QPushButton::clicked, &dialog, &QDialog::accept);
-        connect(btnReiniciar, &QPushButton::clicked, &dialog, &QDialog::reject);
-        connect(btnSalir, &QPushButton::clicked, &dialog, [this, &dialog]() {
-            dialog.done(2);
-        });
-
-        int result = dialog.exec();
-
-        if (result == QDialog::Accepted) {
-            //siguiente nivel2
-            // por ahora solo muesro el manu1
-            menu1->show();
-        } else if (result == QDialog::Rejected) {
-
-            startGame();
-        } else if (result == 2) {
-
-            close();
+        if (timerControllers) {
+            timerControllers->stop();
+            delete timerControllers;
+            timerControllers = nullptr;
         }
+
+        QMediaPlayer* videoPlayer = new QMediaPlayer(this);
+        QAudioOutput* audioOutputTrans = new QAudioOutput(this);
+        QGraphicsVideoItem* videoItemTrans = new QGraphicsVideoItem();
+        QGraphicsScene* videoScene = new QGraphicsScene(this);
+
+        videoPlayer->setAudioOutput(audioOutputTrans);
+        audioOutputTrans->setVolume(1.0);
+        videoPlayer->setVideoOutput(videoItemTrans);
+
+        QString ruta = QDir::currentPath() + "/recursos/video2.mp4";
+        videoPlayer->setSource(QUrl::fromLocalFile(ruta));
+
+        videoItemTrans->setSize(ui->GraphicsView->viewport()->size());
+        videoScene->addItem(videoItemTrans);
+        videoScene->setSceneRect(QRectF(0, 0, ui->GraphicsView->viewport()->width(), ui->GraphicsView->viewport()->height()));
+
+        ui->GraphicsView->setScene(videoScene);
+        videoPlayer->play();
+
+        // Cuando termine el video, inicia el nivel 2
+        connect(videoPlayer, &QMediaPlayer::mediaStatusChanged, this, [this, videoPlayer](QMediaPlayer::MediaStatus status){
+            if (status == QMediaPlayer::EndOfMedia) {
+                videoPlayer->stop();
+                startGame2();
+            }
+        });
     });
 
     connect(nivel1, &Nivel1::nivelFallido, this, [this]() {
@@ -278,6 +290,48 @@ void MainWindow::startGame()
     timerControllers = new QTimer(this);
     connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop);
     timerControllers->start(16);
+
+}
+
+void MainWindow::startGame2()
+{
+    menu1->hide();
+
+    if (timerControllers) {
+        qDebug() << "Eliminando timerControllers en startGame2";
+        timerControllers->stop();
+        delete timerControllers;
+        timerControllers = nullptr;
+    }
+
+    if (nivel1) {
+        qDebug() << "Eliminando nivel1 en starGame2";
+        delete nivel1;
+        nivel1 = nullptr;
+    }
+    if (nivel2) {
+        qDebug() << "Eliminando nivel2";
+        delete nivel2;
+        nivel2 = nullptr;
+    }
+
+    qDebug() << "Antes de crear nivel2";
+    // Crea Nivel2 y el nuevo Goku
+    nivel2 = new Nivel2(this);
+    qDebug() << "Después de crear nivel2";
+    goku = new Goku;
+    goku->setPos(0, 400);
+    nivel2->getEscena()->addItem(goku);
+
+    ui->GraphicsView->setScene(nivel2->getEscena());
+    qDebug() << "iniciando timer de stargame2";
+    //Inicia el nuevo timer para el loop del nivel 2
+    timerControllers = new QTimer(this);
+    connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop2);
+    qDebug() << "gameLoop2 ejecutado";
+    timerControllers->start(16);
+    qDebug() << "Timer de startGame2 iniciado";
+
 
 }
 
@@ -413,6 +467,50 @@ void MainWindow::gameLoop()
     }
 }
 
+void MainWindow::gameLoop2()
+{
+    qDebug() << "gameLoop2 ejecutándose";
+    if (!goku || !nivel2){
+        qDebug() << "goku o nivel2 es nullptr";
+        return;
+    }
+
+    QGraphicsScene* escena = nivel2->getEscena();
+    if (!escena) {
+        qDebug() << "nivel2->getEscena() es nullptr";
+        return;
+    }
+
+    qDebug() << "goku y nivel2 OK";
+
+    float v = 5.0f;
+    QRectF sceneRect = nivel2->getEscena()->sceneRect();
+    qDebug() << "sceneRect OK";
+    QRectF gokuRect = goku->boundingRect().translated(goku->pos());
+
+
+    qDebug() << "gokuRect OK";
+
+    if (keyStates['D']) {
+        if (gokuRect.right() + v <= sceneRect.right())
+            goku->moveBy(v, 0);
+    }
+    if (keyStates['W']) {
+        if (gokuRect.top() - v >= sceneRect.top())
+            goku->moveBy(0, -v);
+    }
+    if (keyStates['S']) {
+        if (gokuRect.bottom() + v <= sceneRect.bottom())
+            goku->moveBy(0, v);
+    }
+
+
+    qDebug() << "Movimientos OK";
+    goku->updateFisica();
+    qDebug() << "updateFisica OK";
+    ui->GraphicsView->centerOn(goku);
+    qDebug() << "centerOn OK";
+}
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {

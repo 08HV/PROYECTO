@@ -14,6 +14,7 @@ public:
     static const QString obstacle1;
     static const QString nivel1;
     static const QString esfera;
+    static const QString nivel2;
 };
 
 #endif // RESOURCES_H
