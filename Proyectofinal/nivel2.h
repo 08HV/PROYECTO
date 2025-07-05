@@ -2,6 +2,7 @@
 #define NIVEL2_H
 
 #include "nivel.h"
+#include "gokunube.h"
 #include <QGraphicsPixmapItem>
 
 #include <QtCore/qglobal.h>
@@ -10,7 +11,7 @@ class Nivel2 : public Nivel
 {
     Q_OBJECT
 public:
-    explicit Nivel2(QObject *parent = nullptr);
+    explicit Nivel2(Gokunube* gokuNube, QObject* parent = nullptr);
     ~Nivel2() override;
 
     void iniciarNivel() override;

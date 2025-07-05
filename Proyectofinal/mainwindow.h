@@ -14,6 +14,7 @@
 #include "nivel1.h"
 #include <QLabel>
 #include "nivel2.h"
+#include "gokunube.h"
 
 
 
@@ -54,6 +55,7 @@ private:
     QGraphicsScene *scene;
 
     Goku *goku;
+    Gokunube *gokunube;
     QTimer *timerControllers;
     QMap<char, bool> keyStates;
 

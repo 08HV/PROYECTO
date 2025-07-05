@@ -2,7 +2,7 @@
 #include <resources.h>
 #include <QPixmap>
 
-Nivel2::Nivel2(QObject *parent)
+Nivel2::Nivel2(Gokunube* gokuNube, QObject* parent)
     : Nivel(parent)
 {
     qDebug() << "Constructor Nivel2";

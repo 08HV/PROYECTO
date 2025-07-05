@@ -11,6 +11,7 @@ CONFIG += c++17
 
 SOURCES += \
     goku.cpp \
+    gokunube.cpp \
     juego.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -24,6 +25,7 @@ SOURCES += \
 
 HEADERS += \
     goku.h \
+    gokunube.h \
     juego.h \
     mainwindow.h \
     nivel.h \

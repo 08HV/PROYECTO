@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     , labelTiempo(nullptr)
     , labelObjetos(nullptr)
     , nivel2(nullptr)
+    , gokunube(nullptr)
 
 {
     ui->setupUi(this);
@@ -200,7 +201,7 @@ void MainWindow::startGame()
     nivel1 = new Nivel1(goku,this);
     nivel1->getEscena()->addItem(goku);
 
-    int cantidad =  12;
+    int cantidad =  1;
     if (nivel1) nivel1->setCantidadObjetivo(cantidad);
     labelObjetos->setText(QString("Objetos: 0/%1").arg(cantidad));
 
@@ -303,36 +304,32 @@ void MainWindow::startGame2()
         delete timerControllers;
         timerControllers = nullptr;
     }
-
     if (nivel1) {
-        qDebug() << "Eliminando nivel1 en starGame2";
         delete nivel1;
         nivel1 = nullptr;
+        goku = nullptr;
     }
+
+    qDebug() << "¿goku es nullptr después de pasar a nivel2?:" << (goku == nullptr);
     if (nivel2) {
         qDebug() << "Eliminando nivel2";
         delete nivel2;
         nivel2 = nullptr;
     }
+    gokunube = new Gokunube;
+    qDebug() << "Gokunube creado en pos:" << gokunube->pos();
+    nivel2 = new Nivel2(gokunube,this);
+    nivel2->getEscena()->addItem(gokunube);
 
-    qDebug() << "Antes de crear nivel2";
-    // Crea Nivel2 y el nuevo Goku
-    nivel2 = new Nivel2(this);
-    qDebug() << "Después de crear nivel2";
-    goku = new Goku;
-    goku->setPos(0, 400);
-    nivel2->getEscena()->addItem(goku);
+    qDebug() << "Items en la escena de nivel2 tras añadir gokunube:";
+    for (auto item : nivel2->getEscena()->items())
+        qDebug() << "Item:" << item;
+
 
     ui->GraphicsView->setScene(nivel2->getEscena());
-    qDebug() << "iniciando timer de stargame2";
-    //Inicia el nuevo timer para el loop del nivel 2
     timerControllers = new QTimer(this);
     connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop2);
-    qDebug() << "gameLoop2 ejecutado";
     timerControllers->start(16);
-    qDebug() << "Timer de startGame2 iniciado";
-
-
 }
 
 void MainWindow::manejarAceleracion(int key, bool presionado)
@@ -362,52 +359,65 @@ void MainWindow::manejarAceleracion(int key, bool presionado)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    if (!goku) return;
-    int key = event->key();
 
-    if (key == Qt::Key_W) {
-        keyStates['W'] = true;
+    int key = event->key();
+    if (goku && goku -> isVisible()){
+        if (key == Qt::Key_W) {
+            keyStates['W'] = true;
+        }
+        else if (key == Qt::Key_A) {
+            keyStates['A'] = true;
+            goku->setIzqui(true);
+            goku->setLast('A');
+        }
+        else if (key == Qt::Key_S) {
+            keyStates['S'] = true;
+        }
+        else if (key == Qt::Key_D) {
+            keyStates['D'] = true;
+            goku->setDer(true);
+            goku->setLast('D');
+        }
+        else if ((key == Qt::Key_Space) && !goku->timerState()) {
+            goku->jumpG();
+        }
+        manejarAceleracion(key, true);
     }
-    else if (key == Qt::Key_A) {
-        keyStates['A'] = true;
-        goku->setIzqui(true);
-        goku->setLast('A');
+
+    if (gokunube && gokunube->isVisible()) {
+        if (key == Qt::Key_Space) {
+            gokunube->espacioPresionado = true;
+        }
     }
-    else if (key == Qt::Key_S) {
-        keyStates['S'] = true;
-    }
-    else if (key == Qt::Key_D) {
-        keyStates['D'] = true;
-        goku->setDer(true);
-        goku->setLast('D');
-    }
-    else if ((key == Qt::Key_Space) && !goku->timerState()) {
-        goku->jumpG();
-    }
-     manejarAceleracion(key, true);
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
-    if (!goku) return;
     int key = event->key();
 
-    if (key == Qt::Key_W) {
-        keyStates['W'] = false;
-    }
-    else if (key == Qt::Key_A) {
-        keyStates['A'] = false;
-        goku->setIzqui(false);
-    }
-    else if (key == Qt::Key_S) {
-        keyStates['S'] = false;
-    }
-    else if (key == Qt::Key_D) {
-        keyStates['D'] = false;
-        goku->setDer(false);
-    }
+    if (goku && goku ->isVisible()) {
+        if (key == Qt::Key_W) {
+            keyStates['W'] = false;
+        }
+        else if (key == Qt::Key_A) {
+            keyStates['A'] = false;
+            goku->setIzqui(false);
+        }
+        else if (key == Qt::Key_S) {
+            keyStates['S'] = false;
+        }
+        else if (key == Qt::Key_D) {
+            keyStates['D'] = false;
+            goku->setDer(false);
+        }
 
-     manejarAceleracion(key, true);
+        manejarAceleracion(key, true);
+    }
+    if (gokunube && gokunube->isVisible()) {
+        if (key == Qt::Key_Space) {
+            gokunube->espacioPresionado = false;
+        }
+    }
 }
 
 void MainWindow::gameLoop()
@@ -470,46 +480,11 @@ void MainWindow::gameLoop()
 void MainWindow::gameLoop2()
 {
     qDebug() << "gameLoop2 ejecutándose";
-    if (!goku || !nivel2){
-        qDebug() << "goku o nivel2 es nullptr";
-        return;
-    }
 
-    QGraphicsScene* escena = nivel2->getEscena();
-    if (!escena) {
-        qDebug() << "nivel2->getEscena() es nullptr";
-        return;
-    }
+    if (!gokunube || !nivel2 ) return;
 
-    qDebug() << "goku y nivel2 OK";
-
-    float v = 5.0f;
-    QRectF sceneRect = nivel2->getEscena()->sceneRect();
-    qDebug() << "sceneRect OK";
-    QRectF gokuRect = goku->boundingRect().translated(goku->pos());
-
-
-    qDebug() << "gokuRect OK";
-
-    if (keyStates['D']) {
-        if (gokuRect.right() + v <= sceneRect.right())
-            goku->moveBy(v, 0);
-    }
-    if (keyStates['W']) {
-        if (gokuRect.top() - v >= sceneRect.top())
-            goku->moveBy(0, -v);
-    }
-    if (keyStates['S']) {
-        if (gokuRect.bottom() + v <= sceneRect.bottom())
-            goku->moveBy(0, v);
-    }
-
-
-    qDebug() << "Movimientos OK";
-    goku->updateFisica();
-    qDebug() << "updateFisica OK";
-    ui->GraphicsView->centerOn(goku);
-    qDebug() << "centerOn OK";
+    gokunube->updateFisica();
+    ui->GraphicsView->centerOn(gokunube);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
