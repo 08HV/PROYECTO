@@ -23,7 +23,7 @@ public:
 
     bool espacioPresionado = false;
 
-    // Parámetros de física de vuelo
+
     float velocidadY = 0;
     const float gravedad = 0.8f;
     const float fuerzaVuelo = 1.5f;

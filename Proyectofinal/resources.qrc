@@ -10,5 +10,8 @@
         <file>Recur/esfera.png</file>
         <file>Recur/nivel2.png</file>
         <file>Recur/gokuNube.png</file>
+        <file>Recur/Fuego.png</file>
+        <file>Recur/ave.png</file>
+        <file>Recur/estatico.png</file>
     </qresource>
 </RCC>

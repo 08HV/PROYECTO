@@ -330,6 +330,36 @@ void MainWindow::startGame2()
     timerControllers = new QTimer(this);
     connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop2);
     timerControllers->start(16);
+
+    nivel2->iniciarNivel();
+
+    connect(nivel2, &Nivel2::nivelFallido, this, [this]() {
+
+        QDialog dialog(this);
+        dialog.setWindowTitle("Has perdido");
+        QVBoxLayout *layout = new QVBoxLayout(&dialog);
+        QLabel *label = new QLabel("¡PERDISTES!, &dialog);
+        layout->addWidget(label);
+
+        QHBoxLayout *buttonLayout = new QHBoxLayout;
+        QPushButton *btnReiniciar = new QPushButton("Reiniciar", &dialog);
+        QPushButton *btnSalir = new QPushButton("Salir", &dialog);
+
+        buttonLayout->addWidget(btnReiniciar);
+        buttonLayout->addWidget(btnSalir);
+        layout->addLayout(buttonLayout);
+
+        connect(btnReiniciar, &QPushButton::clicked, &dialog, &QDialog::accept);
+        connect(btnSalir, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+        int result = dialog.exec();
+
+        if (result == QDialog::Accepted) {
+            startGame2();
+        } else {
+            close();
+        }
+    });
 }
 
 void MainWindow::manejarAceleracion(int key, bool presionado)

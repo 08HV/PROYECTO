@@ -16,6 +16,9 @@ public:
     static const QString esfera;
     static const QString nivel2;
     static const QString gokuNube;
+    static const QString Fuego;
+    static const QString ave;
+    static const QString estatico;
 };
 
 #endif // RESOURCES_H
