@@ -8,7 +8,11 @@ Obstaculo::Obstaculo(QGraphicsItem *parent)
 
 Obstaculo::~Obstaculo()
 {
-
+    if (timer) {
+        timer->stop();
+        delete timer;
+        timer = nullptr;
+    }
 }
 
 float Obstaculo::getVelocidad() const

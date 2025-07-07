@@ -18,7 +18,7 @@ Nivel2::Nivel2(Gokunube* gokuNube, QObject* parent)
 
 
     int anchoFondo = fondo->pixmap().width();
-    int anchoFuego = QPixmap(resources::Fuego).width() / 2; // Asumiendo 2 frames horizontales
+    int anchoFuego = QPixmap(resources::Fuego).width() / 2;
     int cantidadFuegos = (anchoFondo + anchoFuego - 1) / anchoFuego;
 
     for (int i = 0; i < cantidadFuegos; ++i) {
@@ -26,16 +26,16 @@ Nivel2::Nivel2(Gokunube* gokuNube, QObject* parent)
         f->setPos(i * anchoFuego, escena->height() - f->pixmap().height());
         f->setZValue(50);
         escena->addItem(f);
-        obstaculos.append(f); // Si quieres poder borrarlos después
+        obstaculos.append(f);
     }
 
     ObstaculoEstatico* columna1 = new ObstaculoEstatico(resources::estatico, 46, 60, 8,1.5f);
-    columna1->setPos(500, 50);
+    columna1->setPos(500, 40);
     escena->addItem(columna1);
     obstaculosEstaticos.append(columna1);
 
     ObstaculoEstatico* columna4 = new ObstaculoEstatico(resources::estatico, 46, 60, 8,1.5f);
-    columna4->setPos(500, 350);
+    columna4->setPos(500, 400);
     escena->addItem(columna4);
     obstaculosEstaticos.append(columna4);
 
@@ -82,21 +82,39 @@ Nivel2::Nivel2(Gokunube* gokuNube, QObject* parent)
 Nivel2::~Nivel2()
 {
     qDebug() << "Destructor Nivel2";
-    if (timerAves) timerAves->stop();
-    if (timerColisiones) timerColisiones->stop();
 
     qDeleteAll(aves);
     aves.clear();
 
-    if (fuego) { escena->removeItem(fuego); delete fuego; fuego = nullptr; }
+    qDebug() << "es aqui ??";
+
+    if (fuego) {
+        escena->removeItem(fuego);
+        delete fuego;
+        fuego = nullptr; }
 
     qDeleteAll(obstaculosEstaticos);
     obstaculosEstaticos.clear();
+
+    qDebug() << "o  aqui ??";
 
     if (fondo) {
         escena->removeItem(fondo);
         delete fondo;
         fondo = nullptr;
+    }
+
+    qDebug() << "mas bie aqui ??";
+
+    if (timerAves) {
+        timerAves->stop();
+        delete timerAves;
+        timerAves = nullptr;
+    }
+    if (timerColisiones) {
+        timerColisiones->stop();
+        delete timerColisiones;
+        timerColisiones = nullptr;
     }
 }
 
@@ -118,9 +136,9 @@ void Nivel2::slotCrearAve()
     } while (alturas[i] == ultimaAlturaAve && alturas.size() > 1);
 
     int y = alturas[i];
-    ultimaAlturaAve = y; // Recuerda la última altura usada
+    ultimaAlturaAve = y;
 
-    float velocidadAve = 50.0f; // Ajusta a lo que prefieras (no pongas 70)
+    float velocidadAve = 50.0f;
     Ave* ave = new Ave(velocidadAve);
     ave->setPos(escena->width(), y);
     aves.append(ave);

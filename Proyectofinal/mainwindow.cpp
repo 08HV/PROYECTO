@@ -146,8 +146,19 @@ MainWindow::~MainWindow()
         delete nivel2;
         nivel2 = nullptr;
     }
-    goku = nullptr;
+    if (goku) {
+        delete goku;
+        goku = nullptr;
+    }
+
+    if (gokunube) {
+        delete gokunube;
+        gokunube=nullptr;
+    }
+
     delete ui;
+
+
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -298,9 +309,12 @@ void MainWindow::startGame2()
 {
     menu1->hide();
 
+    qDebug() << "=== INICIO DE startGame2() ===";
+
     if (timerControllers) {
         qDebug() << "Eliminando timerControllers en startGame2";
         timerControllers->stop();
+        disconnect(timerControllers,nullptr,this,nullptr);
         delete timerControllers;
         timerControllers = nullptr;
     }
@@ -310,13 +324,33 @@ void MainWindow::startGame2()
         goku = nullptr;
     }
 
-    qDebug() << "¿goku es nullptr después de pasar a nivel2?:" << (goku == nullptr);
     if (nivel2) {
-        qDebug() << "Eliminando nivel2";
+        auto escena = nivel2->getEscena();
+        if (escena) {
+            QList<QGraphicsItem*> items = escena->items();
+            for (QGraphicsItem* item : items) {
+                escena->removeItem(item);
+            }
+        }
+        disconnect(nivel2, nullptr, this, nullptr);
         delete nivel2;
         nivel2 = nullptr;
     }
+
+
+    if (gokunube) {
+        qDebug() << "Eliminando gokunube";
+        delete gokunube;
+        qDebug() << "mas bie aqui el error, si elimino ????";
+        gokunube = nullptr;
+    }
+
+
+
+    qDebug() << "creando a gokunube";
+
     gokunube = new Gokunube;
+    gokunube->setPos(0, 0);
     qDebug() << "Gokunube creado en pos:" << gokunube->pos();
     nivel2 = new Nivel2(gokunube,this);
     nivel2->getEscena()->addItem(gokunube);
@@ -325,20 +359,51 @@ void MainWindow::startGame2()
     for (auto item : nivel2->getEscena()->items())
         qDebug() << "Item:" << item;
 
+    nivel2->iniciarNivel();
 
     ui->GraphicsView->setScene(nivel2->getEscena());
+
+
     timerControllers = new QTimer(this);
     connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop2);
     timerControllers->start(16);
 
-    nivel2->iniciarNivel();
+    connect(nivel2, &Nivel2::nivelCompletado, this, [this]() {
+
+        QMediaPlayer* videoPlayer = new QMediaPlayer(this);
+        QAudioOutput* audioOutputTrans = new QAudioOutput(this);
+        QGraphicsVideoItem* videoItemTrans = new QGraphicsVideoItem();
+        QGraphicsScene* videoScene = new QGraphicsScene(this);
+
+        videoPlayer->setAudioOutput(audioOutputTrans);
+        audioOutputTrans->setVolume(1.0);
+        videoPlayer->setVideoOutput(videoItemTrans);
+
+        QString ruta = QDir::currentPath() + "/recursos/video3.mp4";
+        videoPlayer->setSource(QUrl::fromLocalFile(ruta));
+
+        videoItemTrans->setSize(ui->GraphicsView->viewport()->size());
+        videoScene->addItem(videoItemTrans);
+        videoScene->setSceneRect(QRectF(0, 0, ui->GraphicsView->viewport()->width(), ui->GraphicsView->viewport()->height()));
+
+        ui->GraphicsView->setScene(videoScene);
+        videoPlayer->play();
+
+
+        connect(videoPlayer, &QMediaPlayer::mediaStatusChanged, this, [this, videoPlayer](QMediaPlayer::MediaStatus status){
+            if (status == QMediaPlayer::EndOfMedia) {
+                videoPlayer->stop();
+                //startGame3();
+            }
+        });
+    });
 
     connect(nivel2, &Nivel2::nivelFallido, this, [this]() {
 
         QDialog dialog(this);
         dialog.setWindowTitle("Has perdido");
         QVBoxLayout *layout = new QVBoxLayout(&dialog);
-        QLabel *label = new QLabel("¡PERDISTES!, &dialog);
+        QLabel *label = new QLabel("¡PERDISTES!", &dialog);
         layout->addWidget(label);
 
         QHBoxLayout *buttonLayout = new QHBoxLayout;
@@ -355,11 +420,13 @@ void MainWindow::startGame2()
         int result = dialog.exec();
 
         if (result == QDialog::Accepted) {
-            startGame2();
+            startGame2(); // para reiniciar nivel
         } else {
             close();
         }
     });
+
+    qDebug() << "=== FIN DE startGame2() ===";
 }
 
 void MainWindow::manejarAceleracion(int key, bool presionado)

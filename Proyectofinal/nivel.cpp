@@ -12,6 +12,18 @@ Nivel::Nivel(QObject *parent)
 Nivel::~Nivel()
 {
     obstaculos.clear();
+    if (timerAceleracion) {
+        timerAceleracion->stop();
+        delete timerAceleracion;
+        timerAceleracion = nullptr;
+    }
+
+    if (timerNivel) {
+        timerNivel->stop();
+        delete timerNivel;
+        timerNivel = nullptr;
+    }
+
     qDebug() << "Destructor Nivel";
 }
 

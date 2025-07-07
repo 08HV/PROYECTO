@@ -25,9 +25,20 @@ Personaje::Personaje() {
 
 Personaje::~Personaje()
 {
-    delete timer;
+    if (timer) {
+        timer->stop();
+        delete timer;
+        timer = nullptr;
+    }
+
+    if (attackTimer) {
+        attackTimer->stop();
+        delete attackTimer;
+        attackTimer = nullptr;
+    }
+
     delete body;
-    delete attackTimer;
+    body = nullptr;
 }
 
 void Personaje::setIzqui(bool newIzqui) { izqui = newIzqui; }

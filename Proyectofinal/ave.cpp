@@ -33,9 +33,15 @@ Ave::Ave(float velocidadInicial, QGraphicsItem *parent)
 
 Ave::~Ave()
 {
-    if (timer) timer->stop();
+    if (timer){
+        timer->stop();
+        delete timer;
+        timer = nullptr;
+    }
     delete spriteSheet;
+    spriteSheet = nullptr;
     delete body;
+    body = nullptr;
 }
 
 void Ave::updateSprite()

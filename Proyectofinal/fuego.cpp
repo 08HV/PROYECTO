@@ -22,9 +22,15 @@ Fuego::Fuego(QGraphicsItem *parent)
 
 Fuego::~Fuego()
 {
-    if (timerAnimacion) timerAnimacion->stop();
+    if (timerAnimacion){
+        timerAnimacion->stop();
+        delete timerAnimacion;
+        timerAnimacion = nullptr;
+    }
     delete spriteSheet;
+    spriteSheet = nullptr;
     delete body;
+    body = nullptr;
 }
 
 void Fuego::updateSprite()

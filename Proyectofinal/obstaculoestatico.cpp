@@ -24,8 +24,11 @@ ObstaculoEstatico::ObstaculoEstatico(const QString& spritePath, int frameW, int 
 
 ObstaculoEstatico::~ObstaculoEstatico()
 {
-    timer->stop();
-    delete timer;
+    if (timer) {
+        timer->stop();
+        delete timer;
+        timer = nullptr ;
+    }
 }
 
 void ObstaculoEstatico::mover()

@@ -19,7 +19,7 @@ Gokunube::Gokunube() : Personaje()
 
     body = new QPixmap();
     splitSprite();
-    setPos(50, 200);
+    setPos(0, 0);
     setZValue(10);
 
 }
@@ -27,7 +27,9 @@ Gokunube::Gokunube() : Personaje()
 Gokunube::~Gokunube()
 {
     delete flySprite;
+    flySprite = nullptr;
     delete body;
+    body = nullptr;
 }
 
 void Gokunube::updateSprite()
