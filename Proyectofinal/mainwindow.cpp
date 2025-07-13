@@ -33,6 +33,10 @@ MainWindow::MainWindow(QWidget *parent)
     , labelObjetos(nullptr)
     , nivel2(nullptr)
     , gokunube(nullptr)
+    , maestro(nullptr)
+    , nivel3(nullptr)
+    , barraEnergiaGoku(nullptr)
+    , barraEnergiaMaestro(nullptr)
 
 {
     ui->setupUi(this);
@@ -117,6 +121,23 @@ MainWindow::MainWindow(QWidget *parent)
     labelObjetos->setAlignment(Qt::AlignRight);
     labelObjetos->hide();
 
+    barraEnergiaGoku = new QProgressBar(this);
+    barraEnergiaGoku->setGeometry(40, 60, 220, 30);
+    barraEnergiaGoku->setRange(0, 100);
+    barraEnergiaGoku->setValue(100);
+    barraEnergiaGoku->setFormat("Goku: %v/100");
+    barraEnergiaGoku->setStyleSheet("QProgressBar { color: white; font-size:18px; background: #222; border-radius:7px; } QProgressBar::chunk { background: #16e416; }");
+    barraEnergiaGoku->hide();
+
+    barraEnergiaMaestro = new QProgressBar(this);
+    barraEnergiaMaestro->setGeometry(width()-260, 60, 220, 30);
+    barraEnergiaMaestro->setRange(0, 100);
+    barraEnergiaMaestro->setValue(100);
+    barraEnergiaMaestro->setFormat("Maestro: %v/100");
+    barraEnergiaMaestro->setStyleSheet("QProgressBar { color: white; font-size:18px; background: #222; border-radius:7px; } QProgressBar::chunk { background: #e41616; }");
+    barraEnergiaMaestro->hide();
+
+
     connect(btnJugar, &QPushButton::clicked, this, &MainWindow::startGame);
 
     connect(btnSalir, &QPushButton::clicked, this, &QMainWindow::close);
@@ -155,7 +176,14 @@ MainWindow::~MainWindow()
         delete gokunube;
         gokunube=nullptr;
     }
-
+    if (nivel3) {
+        delete nivel3;
+        nivel3 = nullptr;
+    }
+    if (maestro) {
+        delete maestro;
+        maestro = nullptr;
+    }
     delete ui;
 
 
@@ -177,6 +205,12 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
     if (labelObjetos)
         labelObjetos->setGeometry(width()-230, 10, 200, 40);
+
+    if (barraEnergiaGoku)
+        barraEnergiaGoku->setGeometry(30, 30, 220, 30);
+
+    if (barraEnergiaMaestro)
+        barraEnergiaMaestro->setGeometry(size.width() - 250, 30, 220, 30);
 }
 
 
@@ -393,7 +427,14 @@ void MainWindow::startGame2()
         connect(videoPlayer, &QMediaPlayer::mediaStatusChanged, this, [this, videoPlayer](QMediaPlayer::MediaStatus status){
             if (status == QMediaPlayer::EndOfMedia) {
                 videoPlayer->stop();
-                //startGame3();
+
+                qDebug() << "=== FIN DE video2 ===";
+
+                if (gokunube) { delete gokunube; gokunube = nullptr; }
+                if (timerControllers) { timerControllers->stop(); delete timerControllers; timerControllers = nullptr; }
+
+                qDebug() << "=== FIN DE video ===";
+                startGame3();
             }
         });
     });
@@ -427,6 +468,144 @@ void MainWindow::startGame2()
     });
 
     qDebug() << "=== FIN DE startGame2() ===";
+}
+
+void MainWindow::startGame3()
+{
+    qDebug() << "=== INICIO DE startGame3() ===";
+    keyStates['W'] = false;
+    keyStates['A'] = false;
+    keyStates['S'] = false;
+    keyStates['D'] = false;
+    if (player) player->stop();
+
+    qDebug() << "=== error aqui o aqui ===";
+
+    if (timerControllers) {
+        timerControllers->stop();
+        delete timerControllers;
+        timerControllers = nullptr;
+    }
+
+    qDebug() << "=== error aqui o aqui o mas aqui ===";
+
+    if (nivel3) {
+        delete nivel3;
+        nivel3 = nullptr;
+    }
+    if (goku) {
+        delete goku;
+        goku = nullptr;
+    }
+    if (maestro) {
+        delete maestro;
+        maestro = nullptr;
+    }
+
+    qDebug() << "=== error aqui ?? ===";
+
+    if (barraEnergiaGoku) barraEnergiaGoku->show();
+    if (barraEnergiaMaestro) barraEnergiaMaestro->show();
+
+    goku = new Goku;
+    goku->setPos(100, 540);
+
+    maestro = new Maestro;
+    maestro->setPos(700, 440);
+    maestro->setPisoY(440);
+    maestro->setGoku(goku);
+
+    nivel3 = new Nivel3(goku, maestro, this);
+    nivel3->getEscena()->addItem(goku);
+    nivel3->getEscena()->addItem(maestro);
+
+
+    barraEnergiaGoku->setValue(100);
+    barraEnergiaMaestro->setValue(100);
+
+    qDebug() << "=== o por aqui ?? ===";
+
+    nivel3->iniciarNivel();
+
+
+    connect(nivel3, &Nivel3::nivelCompletado, this, [this]() {
+        barraEnergiaGoku->hide();
+        barraEnergiaMaestro->hide();
+        if (timerControllers) {
+            timerControllers->stop();
+            delete timerControllers;
+            timerControllers = nullptr;
+        }
+        if (nivel3) { delete nivel3; nivel3 = nullptr; }
+        if (goku) { delete goku; goku = nullptr; }
+        if (maestro) { delete maestro; maestro = nullptr; }
+
+
+        QMediaPlayer* videoPlayer = new QMediaPlayer(this);
+        QAudioOutput* audioOutputTrans = new QAudioOutput(this);
+        QGraphicsVideoItem* videoItemTrans = new QGraphicsVideoItem();
+        QGraphicsScene* videoScene = new QGraphicsScene(this);
+
+        videoPlayer->setAudioOutput(audioOutputTrans);
+        audioOutputTrans->setVolume(1.0);
+        videoPlayer->setVideoOutput(videoItemTrans);
+
+        QString ruta = QDir::currentPath() + "/recursos/video_final.mp4";
+        videoPlayer->setSource(QUrl::fromLocalFile(ruta));
+
+        videoItemTrans->setSize(ui->GraphicsView->viewport()->size());
+        videoScene->addItem(videoItemTrans);
+        videoScene->setSceneRect(QRectF(0, 0, ui->GraphicsView->viewport()->width(), ui->GraphicsView->viewport()->height()));
+
+        ui->GraphicsView->setScene(videoScene);
+        videoPlayer->play();
+
+
+        connect(videoPlayer, &QMediaPlayer::mediaStatusChanged, this, [this, videoPlayer](QMediaPlayer::MediaStatus status){
+            if (status == QMediaPlayer::EndOfMedia) {
+                videoPlayer->stop();
+
+                menu1->show();
+            }
+        });
+    });
+
+
+    connect(nivel3, &Nivel3::nivelFallido, this, [this]() {
+        barraEnergiaGoku->hide();
+        barraEnergiaMaestro->hide();
+
+        QDialog dialog(this);
+        dialog.setWindowTitle("¡Perdiste!");
+        QVBoxLayout *layout = new QVBoxLayout(&dialog);
+        QLabel *label = new QLabel("El Maestro mato a Goku.", &dialog);
+        layout->addWidget(label);
+
+        QHBoxLayout *buttonLayout = new QHBoxLayout;
+        QPushButton *btnReiniciar = new QPushButton("Reiniciar", &dialog);
+        QPushButton *btnSalir = new QPushButton("Salir", &dialog);
+
+        buttonLayout->addWidget(btnReiniciar);
+        buttonLayout->addWidget(btnSalir);
+        layout->addLayout(buttonLayout);
+
+        connect(btnReiniciar, &QPushButton::clicked, &dialog, &QDialog::accept);
+        connect(btnSalir, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+        int result = dialog.exec();
+
+        if (result == QDialog::Accepted) {
+            startGame3();
+        } else {
+            close();
+        }
+    });
+
+    ui->GraphicsView->setScene(nivel3->getEscena());
+
+    timerControllers = new QTimer(this);
+    connect(timerControllers, &QTimer::timeout, this, &MainWindow::gameLoop);
+    timerControllers->start(16);
 }
 
 void MainWindow::manejarAceleracion(int key, bool presionado)
@@ -519,59 +698,110 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 
 void MainWindow::gameLoop()
 {
-    if (!goku || !nivel1 ) return;
-    float v = 5.0f;
-    Goku* gokuReal = dynamic_cast<Goku*>(goku);
-    if (gokuReal) {
-        v = gokuReal->acelerando ? gokuReal->velocidadAcelerada : gokuReal->velocidadNormal;
-    }
-
-    QRectF sceneRect = nivel1->getEscena()->sceneRect();
-    QRectF gokuRect = goku->boundingRect().translated(goku->pos());
-
-    if (keyStates['D']) {
-        if (gokuRect.right() + v <= sceneRect.right())
-        goku->moveBy(v, 0);
-    }
-    else if (keyStates['A']) {
-        if (gokuRect.left() - v >= sceneRect.left())
-        goku->moveBy(-v, 0);
-    }
-
-    goku->updateFisica();
-    ui->GraphicsView->centerOn(goku);
-
-
-    for (Obstaculo* obs : nivel1->getObstaculos()) {
-        Tortuga* tortuga = dynamic_cast<Tortuga*>(obs);
-        if (!tortuga) continue;
-
-        if (tortuga->x() < 0) {
-            nivel1->eliminarObstaculo(tortuga);
-            continue;
+    if (nivel1 && goku && !nivel3) {
+        float v = 5.0f;
+        Goku* gokuReal = dynamic_cast<Goku*>(goku);
+        if (gokuReal) {
+            v = gokuReal->acelerando ? gokuReal->velocidadAcelerada : gokuReal->velocidadNormal;
         }
 
-        if (goku->collidesWithItem(tortuga)) {
-            if (goku->isAttacking()) {
+        QRectF sceneRect = nivel1->getEscena()->sceneRect();
+        QRectF gokuRect = goku->boundingRect().translated(goku->pos());
+
+        if (keyStates['D']) {
+            if (gokuRect.right() + v <= sceneRect.right())
+            goku->moveBy(v, 0);
+        }
+        else if (keyStates['A']) {
+            if (gokuRect.left() - v >= sceneRect.left())
+            goku->moveBy(-v, 0);
+        }
+
+        goku->updateFisica();
+        ui->GraphicsView->centerOn(goku);
+
+
+        for (Obstaculo* obs : nivel1->getObstaculos()) {
+            Tortuga* tortuga = dynamic_cast<Tortuga*>(obs);
+            if (!tortuga) continue;
+
+            if (tortuga->x() < 0) {
                 nivel1->eliminarObstaculo(tortuga);
-                break;
-            } else {
-                goku->morir();
-                nivel1->terminarNivel(false);
-                return;
+                continue;
+            }
+
+            if (goku->collidesWithItem(tortuga)) {
+                if (goku->isAttacking()) {
+                    nivel1->eliminarObstaculo(tortuga);
+                    break;
+                } else {
+                    goku->morir();
+                    nivel1->terminarNivel(false);
+                    return;
+                }
             }
         }
+
+        if (nivel1->getColeccionable() && goku->collidesWithItem(nivel1->getColeccionable())) {
+            nivel1->recogerColeccionable();
+            if (labelObjetos)
+                labelObjetos->setText(
+                    QString("Objetos: %1/%2")
+                        .arg(nivel1->getObjetosRecogidos())
+                        .arg(nivel1->getCantidadObjetivo())
+                );
+        }
+        return;
     }
 
-    if (nivel1->getColeccionable() && goku->collidesWithItem(nivel1->getColeccionable())) {
-        nivel1->recogerColeccionable();
-        if (labelObjetos)
-            labelObjetos->setText(
-                QString("Objetos: %1/%2")
-                    .arg(nivel1->getObjetosRecogidos())
-                    .arg(nivel1->getCantidadObjetivo())
-            );
+    if (nivel3 && goku && maestro) {
+        float v = 5.0f;
+        Goku* gokuReal = dynamic_cast<Goku*>(goku);
+        if (gokuReal) {
+            v = gokuReal->acelerando ? gokuReal->velocidadAcelerada : gokuReal->velocidadNormal;
+        }
+
+        QRectF sceneRect = nivel3->getEscena()->sceneRect();
+        QRectF gokuRect = goku->boundingRect().translated(goku->pos());
+
+
+        if (keyStates['D']) {
+            if (gokuRect.right() + v <= sceneRect.right())
+                goku->moveBy(v, 0);
+        }
+        else if (keyStates['A']) {
+            if (gokuRect.left() - v >= sceneRect.left())
+                goku->moveBy(-v, 0);
+        }
+
+        goku->updateFisica();
+
+
+        maestro->updateAutonomo();
+        maestro->updateFisica();
+
+
+        ui->GraphicsView->centerOn(goku);
+
+        // --- Colisiones y pelea ---
+        if (goku->collidesWithItem(maestro)) {
+            if (goku->isAttacking()) {
+                nivel3->dañarMaestro(2);
+            }
+            else if (maestro->isAttacking()) {
+                nivel3->dañarGoku(2);
+            }
+        }
+
+        // Actualiza barras de energía
+        if (barraEnergiaGoku)
+            barraEnergiaGoku->setValue(nivel3->getEnergiaGoku());
+        if (barraEnergiaMaestro)
+            barraEnergiaMaestro->setValue(nivel3->getEnergiaMaestro());
+
+        return;
     }
+
 }
 
 void MainWindow::gameLoop2()

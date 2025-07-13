@@ -50,6 +50,7 @@ public:
     virtual void morir();
 
     virtual void updateFisica();
+    void setPisoY(float y) { pisoY = y; }
 
 protected slots:
     virtual void animation();

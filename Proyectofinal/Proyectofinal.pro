@@ -14,11 +14,13 @@ SOURCES += \
     fuego.cpp \
     goku.cpp \
     gokunube.cpp \
+    maestro.cpp \
     main.cpp \
     mainwindow.cpp \
     nivel.cpp \
     nivel1.cpp \
     nivel2.cpp \
+    nivel3.cpp \
     obstaculo.cpp \
     obstaculoestatico.cpp \
     personaje.cpp \
@@ -30,10 +32,12 @@ HEADERS += \
     fuego.h \
     goku.h \
     gokunube.h \
+    maestro.h \
     mainwindow.h \
     nivel.h \
     nivel1.h \
     nivel2.h \
+    nivel3.h \
     obstaculo.h \
     obstaculoestatico.h \
     personaje.h \

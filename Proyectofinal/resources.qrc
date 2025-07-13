@@ -13,5 +13,10 @@
         <file>Recur/Fuego.png</file>
         <file>Recur/ave.png</file>
         <file>Recur/estatico.png</file>
+        <file>Recur/nivel3.png</file>
+        <file>Recur/maestro_camin.png</file>
+        <file>Recur/maestro_jump.png</file>
+        <file>Recur/maestro_punch.png</file>
+        <file>Recur/maestro_quieto.png</file>
     </qresource>
 </RCC>

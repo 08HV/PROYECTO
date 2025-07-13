@@ -19,6 +19,11 @@ public:
     static const QString Fuego;
     static const QString ave;
     static const QString estatico;
+    static const QString nivel3;
+    static const QString stopMaestro;
+    static const QString runMaestro;
+    static const QString jumpMaestro;
+    static const QString attackMaestro;
 };
 
 #endif // RESOURCES_H

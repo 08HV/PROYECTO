@@ -15,6 +15,10 @@
 #include <QLabel>
 #include "nivel2.h"
 #include "gokunube.h"
+#include "nivel3.h"
+#include "maestro.h"
+#include <QProgressBar>
+
 
 
 
@@ -43,6 +47,7 @@ private slots:
     void startGame2();
     void gameLoop();
     void gameLoop2();
+    void startGame3();
 
 private:
     Ui::MainWindow *ui;
@@ -58,14 +63,19 @@ private:
     Gokunube *gokunube;
     QTimer *timerControllers;
     QMap<char, bool> keyStates;
+    Maestro *maestro;
 
     Nivel1 *nivel1;
     Nivel2 *nivel2;
+    Nivel3 *nivel3;
 
     void manejarAceleracion(int key, bool presionado);
 
     QLabel *labelTiempo = nullptr;
     QLabel *labelObjetos = nullptr;
+
+    QProgressBar *barraEnergiaGoku = nullptr;
+    QProgressBar *barraEnergiaMaestro = nullptr;
 
 
 };
