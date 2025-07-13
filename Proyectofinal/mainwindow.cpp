@@ -167,18 +167,17 @@ MainWindow::~MainWindow()
         delete nivel2;
         nivel2 = nullptr;
     }
+    if (nivel3) {
+        delete nivel3;
+        nivel3 = nullptr;
+    }
     if (goku) {
         delete goku;
         goku = nullptr;
     }
-
     if (gokunube) {
         delete gokunube;
         gokunube=nullptr;
-    }
-    if (nivel3) {
-        delete nivel3;
-        nivel3 = nullptr;
     }
     if (maestro) {
         delete maestro;
@@ -216,6 +215,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::startGame()
 {
+    if (timerControllers) {
+        timerControllers->stop();
+        delete timerControllers;
+        timerControllers = nullptr;
+    }
 
     keyStates['W'] = false;
     keyStates['A'] = false;
@@ -227,12 +231,6 @@ void MainWindow::startGame()
 
     if (labelTiempo) labelTiempo->show();
     if (labelObjetos) labelObjetos->show();
-
-    if (timerControllers) {
-        timerControllers->stop();
-        delete timerControllers;
-        timerControllers = nullptr;
-    }
 
     if (nivel1) {
         qDebug() << "Eliminando nivel1 en starGame";
@@ -262,6 +260,7 @@ void MainWindow::startGame()
             delete timerControllers;
             timerControllers = nullptr;
         }
+
 
         QMediaPlayer* videoPlayer = new QMediaPlayer(this);
         QAudioOutput* audioOutputTrans = new QAudioOutput(this);
@@ -404,6 +403,12 @@ void MainWindow::startGame2()
 
     connect(nivel2, &Nivel2::nivelCompletado, this, [this]() {
 
+        if (timerControllers) {
+            timerControllers->stop();
+            delete timerControllers;
+            timerControllers = nullptr;
+        }
+
         QMediaPlayer* videoPlayer = new QMediaPlayer(this);
         QAudioOutput* audioOutputTrans = new QAudioOutput(this);
         QGraphicsVideoItem* videoItemTrans = new QGraphicsVideoItem();
@@ -431,7 +436,6 @@ void MainWindow::startGame2()
                 qDebug() << "=== FIN DE video2 ===";
 
                 if (gokunube) { delete gokunube; gokunube = nullptr; }
-                if (timerControllers) { timerControllers->stop(); delete timerControllers; timerControllers = nullptr; }
 
                 qDebug() << "=== FIN DE video ===";
                 startGame3();
@@ -440,6 +444,12 @@ void MainWindow::startGame2()
     });
 
     connect(nivel2, &Nivel2::nivelFallido, this, [this]() {
+
+        if (timerControllers) {
+            timerControllers->stop();
+            delete timerControllers;
+            timerControllers = nullptr;
+        }
 
         QDialog dialog(this);
         dialog.setWindowTitle("Has perdido");
@@ -531,41 +541,51 @@ void MainWindow::startGame3()
     connect(nivel3, &Nivel3::nivelCompletado, this, [this]() {
         barraEnergiaGoku->hide();
         barraEnergiaMaestro->hide();
-        if (timerControllers) {
-            timerControllers->stop();
-            delete timerControllers;
-            timerControllers = nullptr;
-        }
-        if (nivel3) { delete nivel3; nivel3 = nullptr; }
-        if (goku) { delete goku; goku = nullptr; }
-        if (maestro) { delete maestro; maestro = nullptr; }
-
+        qDebug() << "=== o por aqui en complete ?? ===";
 
         QMediaPlayer* videoPlayer = new QMediaPlayer(this);
         QAudioOutput* audioOutputTrans = new QAudioOutput(this);
         QGraphicsVideoItem* videoItemTrans = new QGraphicsVideoItem();
         QGraphicsScene* videoScene = new QGraphicsScene(this);
 
+        qDebug() << "=== o por aqui en complete2 ?? ===";
+
         videoPlayer->setAudioOutput(audioOutputTrans);
         audioOutputTrans->setVolume(1.0);
         videoPlayer->setVideoOutput(videoItemTrans);
-
+        qDebug() << "=== o por aqui en complete3 ?? ===";
         QString ruta = QDir::currentPath() + "/recursos/video_final.mp4";
         videoPlayer->setSource(QUrl::fromLocalFile(ruta));
-
+        qDebug() << "=== o por aqui ruta de video ?? ===";
         videoItemTrans->setSize(ui->GraphicsView->viewport()->size());
         videoScene->addItem(videoItemTrans);
         videoScene->setSceneRect(QRectF(0, 0, ui->GraphicsView->viewport()->width(), ui->GraphicsView->viewport()->height()));
 
         ui->GraphicsView->setScene(videoScene);
         videoPlayer->play();
-
+        qDebug() << "=== sera aqui ?? ===";
 
         connect(videoPlayer, &QMediaPlayer::mediaStatusChanged, this, [this, videoPlayer](QMediaPlayer::MediaStatus status){
             if (status == QMediaPlayer::EndOfMedia) {
                 videoPlayer->stop();
+                qDebug() << "=== o por aqui  ===";
 
-                menu1->show();
+                if (goku) { delete goku; goku = nullptr; }
+                qDebug() << "=== para ver  ===";
+                if (maestro) { delete maestro; maestro = nullptr; }
+                qDebug() << "=== mas bien aqui ?? ?? ===";
+                if (timerControllers) {
+                    timerControllers->stop();
+                    delete timerControllers;
+                    timerControllers = nullptr;
+                }
+                qDebug() << "=== aqui ?? ===";
+                ui->GraphicsView->setScene(scene);
+                if (videoItem && player) {
+                    player->setPosition(0);
+                    player->play();
+                }
+                close();
             }
         });
     });
@@ -595,6 +615,15 @@ void MainWindow::startGame3()
         int result = dialog.exec();
 
         if (result == QDialog::Accepted) {
+            if (goku) { delete goku; goku = nullptr; }
+            qDebug() << "=== para ver  ===";
+            if (maestro) { delete maestro; maestro = nullptr; }
+            qDebug() << "=== mas bien aqui ?? ?? ===";
+            if (timerControllers) {
+                timerControllers->stop();
+                delete timerControllers;
+                timerControllers = nullptr;
+            }
             startGame3();
         } else {
             close();
@@ -807,6 +836,15 @@ void MainWindow::gameLoop()
 void MainWindow::gameLoop2()
 {
     qDebug() << "gameLoop2 ejecutándose";
+
+    if (!nivel2) {
+        qDebug() << "ERROR: nivel2 es nullptr";
+        return;
+    }
+    if (!gokunube) {
+        qDebug() << "ERROR: gokunube es nullptr";
+        return;
+    }
 
     if (!gokunube || !nivel2 ) return;
 

@@ -9,6 +9,7 @@
 #include "ave.h"
 #include <QTimer>
 #include <QList>
+#include <QPointer>
 
 #include <QtCore/qglobal.h>
 
@@ -21,6 +22,7 @@ public:
 
     void iniciarNivel() override;
     void terminarNivel(bool exito);
+    void eliminarTodasLasAves();
 
 
 signals:
@@ -38,11 +40,12 @@ private:
 
     Fuego* fuego = nullptr;
     QList<ObstaculoEstatico*> obstaculosEstaticos;
-    QList<Ave*> aves;
+    QList<QPointer<Ave>> aves;
 
     QTimer* timerAves = nullptr;
     QTimer* timerColisiones = nullptr;
     bool nivelTerminado = false;
+    bool enDestruccion = false;
 
     void removerAvesFueraPantalla();
     int ultimaAlturaAve = -1;

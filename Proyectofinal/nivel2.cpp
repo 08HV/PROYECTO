@@ -64,8 +64,6 @@ Nivel2::Nivel2(Gokunube* gokuNube, QObject* parent)
     escena->addItem(columna7);
     obstaculosEstaticos.append(columna7);
 
-
-
     // Timer para aves
     timerAves = new QTimer(this);
     connect(timerAves, &QTimer::timeout, this, &Nivel2::slotCrearAve);
@@ -82,9 +80,21 @@ Nivel2::Nivel2(Gokunube* gokuNube, QObject* parent)
 Nivel2::~Nivel2()
 {
     qDebug() << "Destructor Nivel2";
+    enDestruccion = true;
+    if (timerAves) {
+        timerAves->stop();
+        timerAves->disconnect();
+        delete timerAves;
+        timerAves = nullptr;
+    }
+    if (timerColisiones) {
+        timerColisiones->stop();
+        timerColisiones->disconnect();
+        delete timerColisiones;
+        timerColisiones = nullptr;
+    }
 
-    qDeleteAll(aves);
-    aves.clear();
+    eliminarTodasLasAves();
 
     qDebug() << "es aqui ??";
 
@@ -106,16 +116,6 @@ Nivel2::~Nivel2()
 
     qDebug() << "mas bie aqui ??";
 
-    if (timerAves) {
-        timerAves->stop();
-        delete timerAves;
-        timerAves = nullptr;
-    }
-    if (timerColisiones) {
-        timerColisiones->stop();
-        delete timerColisiones;
-        timerColisiones = nullptr;
-    }
 }
 
 void Nivel2::iniciarNivel()
@@ -127,6 +127,7 @@ void Nivel2::iniciarNivel()
 
 void Nivel2::slotCrearAve()
 {
+    if (enDestruccion) return;
     if (!escena) return;
     QList<int> alturas = {60, 180, 350, 430};
 
@@ -147,10 +148,10 @@ void Nivel2::slotCrearAve()
 
 void Nivel2::slotComprobarColisiones()
 {
+    if (enDestruccion) return;
     if (!gokunube || nivelTerminado) return;
 
     int alturaLimite = 81;
-
     // Zona de muerte por altura Y
     if (gokunube->y() + gokunube->boundingRect().height() > escena->height() - alturaLimite) {
         nivelTerminado = true;
@@ -162,6 +163,7 @@ void Nivel2::slotComprobarColisiones()
     for (auto est : obstaculosEstaticos) {
         if (gokunube->collidesWithItem(est)) {
             nivelTerminado = true;
+            enDestruccion = true;
             gokunube->morir();
             terminarNivel(false);
             return;
@@ -169,40 +171,66 @@ void Nivel2::slotComprobarColisiones()
     }
     // Aves
     for (auto ave : aves) {
+        if (!ave) continue;
         if (gokunube->collidesWithItem(ave)) {
             nivelTerminado = true;
+            enDestruccion = true;
             gokunube->morir();
             terminarNivel(false);
             return;
         }
     }
-    // Llegó al final del fondo
     if (gokunube->pos().x() + gokunube->boundingRect().width() >= escena->width()) {
-        nivelTerminado = true;;
+        nivelTerminado = true;
+        enDestruccion = true;
         terminarNivel(true);
     }
 
-    removerAvesFueraPantalla();
+     removerAvesFueraPantalla();
 }
 
 void Nivel2::terminarNivel(bool exito) {
-    if (timerAves) timerAves->stop();
-    if (timerColisiones) timerColisiones->stop();
+    nivelTerminado = true;
+    enDestruccion = true;
+    if (timerAves){
+        timerAves->stop();
+        timerAves->disconnect();
+    }
+    if (timerColisiones){
+        timerColisiones->stop();
+        timerColisiones->disconnect();
+    }
     if (exito)
         emit nivelCompletado();
     else
         emit nivelFallido();
-    // detener timerrr
+
+}
+
+void Nivel2::eliminarTodasLasAves()
+{
+    for (QPointer<Ave> ave : aves) {
+        if (!ave) continue;
+        if (ave->scene()){
+            ave->scene()->removeItem(ave);
+        }
+        ave->deleteLater();
+    }
+    aves.clear();
 }
 
 void Nivel2::removerAvesFueraPantalla()
 {
     for (int i = aves.size() - 1; i >= 0; --i) {
-        Ave* ave = aves.at(i);
+        QPointer<Ave> ave = aves.at(i);
+        if (!ave) { aves.removeAt(i); continue; }
         if (ave->x() + ave->boundingRect().width() < 0) {
-            escena->removeItem(ave);
+            if (ave->scene()) {
+                ave->scene()->removeItem(ave);
+            }
+            ave->deleteLater();
             aves.removeAt(i);
-            delete ave;
+
         }
     }
 }
