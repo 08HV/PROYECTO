@@ -11,6 +11,9 @@ public:
     static const QString runGoku;
     static const QString jumpGoku;
     static const QString attack1;
+    static const QString attack2;
+    static const QString attack3;
+    static const QString fallGoku;
     static const QString obstacle1;
     static const QString nivel1;
     static const QString esfera;
@@ -24,6 +27,9 @@ public:
     static const QString runMaestro;
     static const QString jumpMaestro;
     static const QString attackMaestro;
+    static const QString bastonMaestro;
+    static const QString kickMaestro;
+    static const QString fallMaestro;
 };
 
 #endif // RESOURCES_H

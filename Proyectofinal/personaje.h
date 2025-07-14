@@ -24,6 +24,14 @@ protected:
     bool enElAire = false;
     float pisoY = 540;
 
+    QTimer* caidoTimer = nullptr;
+    bool attack3 = false;
+    QPixmap* kickSprite = nullptr;
+    QPixmap* attack2Sprite = nullptr;
+    QPixmap* caidoSprite = nullptr;
+    bool caido = false;
+    float impulsoX = 0.0f;
+
 public:
     Personaje();
     virtual ~Personaje();
@@ -43,6 +51,7 @@ public:
     virtual void jumpG();
     virtual void leftAttack();
     virtual void rightAttack();
+    virtual void kickAttack();
 
     bool isAttacking() const;
     virtual void startAttack();
@@ -52,10 +61,19 @@ public:
     virtual void updateFisica();
     void setPisoY(float y) { pisoY = y; }
 
+    void caer(float fuerzaImpulsoX = 0.0f, float fuerzaImpulsoY = -18.0f);
+    bool estaCaido() const { return caido; }
+
+    bool isAttack1() const { return attack1; }
+    bool isAttack2() const { return attack2; }
+    bool isAttack3() const { return attack3; }
+
 protected slots:
     virtual void animation();
     virtual void stopRattack();
     virtual void stopLattack();
+    virtual void stopKickAttack();
+    virtual void recuperarseDeCaida();
 
 };
 

@@ -30,6 +30,9 @@ private:
     QPixmap* idleSprite;
     QPixmap* jumpSprite;
     QPixmap* attack1Sprite;
+    QPixmap* bastonSprite;
+    QPixmap* kickSprite;
+    QPixmap* caidoSprite;
 
 
     QTimer* iaTimer;

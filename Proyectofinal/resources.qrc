@@ -18,5 +18,11 @@
         <file>Recur/maestro_jump.png</file>
         <file>Recur/maestro_punch.png</file>
         <file>Recur/maestro_quieto.png</file>
+        <file>Recur/gokuAtt2.png</file>
+        <file>Recur/gokuAtt3.png</file>
+        <file>Recur/gokucaida.png</file>
+        <file>Recur/maestroAtt2.png</file>
+        <file>Recur/maestroAtt3.png</file>
+        <file>Recur/maestrocaida.png</file>
     </qresource>
 </RCC>

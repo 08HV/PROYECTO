@@ -12,6 +12,9 @@ Maestro::Maestro()
     idleSprite   = new QPixmap(resources::stopMaestro);
     jumpSprite   = new QPixmap(resources::jumpMaestro);
     attack1Sprite= new QPixmap(resources::attackMaestro);
+    bastonSprite = new QPixmap(resources::bastonMaestro);
+    kickSprite   = new QPixmap(resources::kickMaestro);
+    caidoSprite  = new QPixmap(resources::fallMaestro);
 
     iaTimer = new QTimer(this);
     iaTimer->start(900); //
@@ -29,6 +32,9 @@ Maestro::~Maestro()
     delete idleSprite;
     delete jumpSprite;
     delete attack1Sprite;
+    delete attack2Sprite;
+    delete kickSprite;
+    delete caidoSprite;
     if (iaTimer) {
         iaTimer->stop();
         delete iaTimer;
@@ -41,32 +47,40 @@ void Maestro::setGoku(Goku* gokuPtr) {
 
 void Maestro::updateSprite()
 {
-    if (attack1) {
-        column = (column + 1) % 3; // 3 frames
-    } else if (jump) {
-        column = (column + 1) % 5; // 5 frames
+    if (attack3 && kickSprite) {
+        column = (column + 1) % 10;
+    } else if (attack2 && attack2Sprite) {
+        column = (column + 1) % 7;
+    } else if (attack1 && attack1Sprite) {
+        column = (column + 1) % 3;
+    } else if (jump && jumpSprite) {
+        column = (column + 1) % 5;
     } else if (izqui || der) {
-        column = (column + 1) % 3; // 3 frames
+        column = (column + 1) % 3;
+    } else if (caido && caidoSprite) {
+        column = (column + 1) % 5;
     } else {
-        column = (column + 1) % 10; // 10 frames
+        column = (column + 1) % 10;
     }
 }
 
 void Maestro::splitSprite()
 {
-    if (attack1) {
+    if (attack3 && kickSprite) {
+        *body = kickSprite->copy(column * 119, 0, 85, 101);
+    } else if (attack2 && bastonSprite) {
+        *body = bastonSprite->copy(column * 119, 0, 85, 101);
+    } else if (attack1 && attack1Sprite) {
         *body = attack1Sprite->copy(column * 119, 0, 85, 101);
-        qDebug() << "Attack coords:" << column * 110 << ", 0";
-    }
-    else if (jump) {
+    } else if (jump && jumpSprite) {
         *body = jumpSprite->copy(column * 96, 0, 96, 106);
-    }
-    else if (izqui || der) {
+    } else if (izqui || der) {
         *body = runSprite->copy(column * 105, 0, 90, 101);
-        qDebug() << "Run coords:" << column * 96 << ", 0";
-    }
-    else {
+    } else {
         *body = idleSprite->copy(column * 95, 0, 82, 101);
+    }
+    if (caido && caidoSprite) {
+        *body = caidoSprite->copy(column, row,100 ,99 );
     }
 }
 
@@ -76,7 +90,9 @@ void Maestro::animation()
     updateSprite();
     splitSprite();
 
-    if ((!izqui && last == 'A') && !jump) {
+    if (caido && caidoSprite) {
+        setPixmap(body->scaled(scale * 40, scale * 39));
+    } else if ((!izqui && last == 'A') && !jump) {
         setPixmap((body->scaled(scale * 98, scale * 101)).transformed(QTransform().scale(-1, 1)));
     }
     else if ((!der && last == 'D') && !jump) {
@@ -94,7 +110,7 @@ void Maestro::animation()
     else if (!der && jump) {
         setPixmap((body->scaled(scale * 98, scale * 106)).transformed(QTransform().scale(-1, 1)));
     }
-    else if (attack1) {
+    else if (attack1 || attack2 || attack3) {
         setPixmap(body->scaled(scale * 115, scale * 101));
     }
 
@@ -102,7 +118,7 @@ void Maestro::animation()
 
 void Maestro::updateIA()
 {
-    if (!goku) return;
+    if (!goku || caido) return;
 
 
     if (goku->x() < x()) {
@@ -141,6 +157,7 @@ void Maestro::updateIA()
 
 void Maestro::updateAutonomo()
 {
+    if (caido) return;
     float v = 2.0f;
     QRectF sceneRect = scene()->sceneRect();
     QRectF maestroRect = boundingRect().translated(pos());
@@ -166,7 +183,7 @@ void Maestro::updateAutonomo()
 }
 
 bool Maestro::isAttacking() const {
-    return attack1;
+    return attack1 || attack2 || attack3;
 }
 
 void Maestro::updateFisica()

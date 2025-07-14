@@ -15,6 +15,13 @@
 #include <QDialog>
 #include <QLabel>
 #include <QHBoxLayout>
+#include <map>
+
+std::map<int, bool> attackKeyStates = {
+    {Qt::Key_J, false},
+    {Qt::Key_K, false},
+    {Qt::Key_L, false}
+};
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -666,7 +673,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 {
 
     int key = event->key();
-    if (goku && goku -> isVisible()){
+    if (goku && goku -> isVisible() && !goku->estaCaido()){
         if (key == Qt::Key_W) {
             keyStates['W'] = true;
         }
@@ -685,6 +692,18 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         else if ((key == Qt::Key_Space) && !goku->timerState()) {
             goku->jumpG();
+        }
+        else if (key == Qt::Key_J && !attackKeyStates[Qt::Key_J]) {
+            goku->leftAttack(); // Puño
+            attackKeyStates[Qt::Key_J] = true;
+        }
+        else if (key == Qt::Key_K && !attackKeyStates[Qt::Key_K]) {
+            goku->rightAttack(); // Bastón o baculo
+            attackKeyStates[Qt::Key_K] = true;
+        }
+        else if (key == Qt::Key_L && !attackKeyStates[Qt::Key_L]) {
+            goku->kickAttack(); // Patada
+            attackKeyStates[Qt::Key_L] = true;
         }
         manejarAceleracion(key, true);
     }
@@ -715,6 +734,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
             keyStates['D'] = false;
             goku->setDer(false);
         }
+
+        if (key == Qt::Key_J) attackKeyStates[Qt::Key_J] = false;
+        if (key == Qt::Key_K) attackKeyStates[Qt::Key_K] = false;
+        if (key == Qt::Key_L) attackKeyStates[Qt::Key_L] = false;
 
         manejarAceleracion(key, true);
     }
@@ -794,31 +817,60 @@ void MainWindow::gameLoop()
         QRectF gokuRect = goku->boundingRect().translated(goku->pos());
 
 
-        if (keyStates['D']) {
-            if (gokuRect.right() + v <= sceneRect.right())
+        if (!goku->estaCaido()) {
+            if (keyStates['D'] && gokuRect.right() + v <= sceneRect.right())
                 goku->moveBy(v, 0);
-        }
-        else if (keyStates['A']) {
-            if (gokuRect.left() - v >= sceneRect.left())
+            if (keyStates['A'] && gokuRect.left() - v >= sceneRect.left())
                 goku->moveBy(-v, 0);
         }
 
         goku->updateFisica();
-
-
         maestro->updateAutonomo();
         maestro->updateFisica();
 
 
         ui->GraphicsView->centerOn(goku);
 
+        static int comboGolpesGoku = 0;
+        static int comboGolpesMaestro = 0;
+
         // --- Colisiones y pelea ---
         if (goku->collidesWithItem(maestro)) {
-            if (goku->isAttacking()) {
+            if (goku->isAttack2() && !maestro->estaCaido()) {
+                maestro->caer(goku->x() < maestro->x() ? 12.0f : -12.0f, -15.0f);
                 nivel3->dañarMaestro(2);
+                comboGolpesGoku = 0;
             }
-            else if (maestro->isAttacking()) {
+            else if (maestro->isAttack3() && !maestro->estaCaido())  {
+                maestro->caer(goku->x() < maestro->x() ? 8.0f : -8.0f, -8.0f);
                 nivel3->dañarGoku(2);
+                comboGolpesGoku = 0;
+            }
+            else if (goku->isAttack1() && !maestro->estaCaido()) { // Puño = combo
+                nivel3->dañarMaestro(1);
+                comboGolpesGoku++;
+                if (comboGolpesGoku >= 3) {
+                    maestro->caer(goku->x() < maestro->x() ? 10.0f : -10.0f, -12.0f);
+                    comboGolpesGoku = 0;
+                }
+            }
+            if (maestro->isAttack2() && !goku->estaCaido()) {
+                goku->caer(maestro->x() < goku->x() ? 12.0f : -12.0f, -15.0f);
+                nivel3->dañarGoku(4);
+                comboGolpesMaestro = 0;
+            }
+            else if (maestro->isAttack3() && !goku->estaCaido()) {
+                goku->caer(maestro->x() < goku->x() ? 8.0f : -8.0f, -8.0f);
+                nivel3->dañarGoku(2);
+                comboGolpesMaestro = 0;
+            }
+            else if (maestro->isAttack1() && !goku->estaCaido()) {
+                nivel3->dañarGoku(1);
+                comboGolpesMaestro++;
+                if (comboGolpesMaestro >= 3) {
+                    goku->caer(maestro->x() < goku->x() ? 10.0f : -10.0f, -12.0f);
+                    comboGolpesMaestro = 0;
+                }
             }
         }
 
@@ -830,7 +882,6 @@ void MainWindow::gameLoop()
 
         return;
     }
-
 }
 
 void MainWindow::gameLoop2()
@@ -861,8 +912,8 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
     else if (button == Qt::RightButton) {
         goku->rightAttack();
-
     }
 }
+
 
 

@@ -14,7 +14,10 @@ private:
     QPixmap* idleSprite;
     QPixmap* jumpSprite;
     QPixmap* attack1Sprite;
-    // QPixmap* attack2Sprite;
+    QPixmap* attack2Sprite;
+    QPixmap* kickSprite = nullptr;
+    QPixmap* caidoSprite = nullptr;
+
 
 public:
     Goku();
